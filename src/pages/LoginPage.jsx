@@ -1,14 +1,28 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { supabase } from '../lib/supabase.js'
 import './LoginPage.css'
-
-const PRESET_NAMES = ['여행자 1', '여행자 2', '여행자 3']
 
 export default function LoginPage({ onLogin }) {
   const [name, setName] = useState('')
   const [shaking, setShaking] = useState(false)
+  const [presets, setPresets] = useState([])
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    const fetchTravelers = async () => {
+      const { data, error } = await supabase
+        .from('travelers')
+        .select('name')
+        .order('created_at', { ascending: true })
+      
+      if (!error && data) {
+        setPresets(data.map(t => t.name))
+      }
+    }
+    fetchTravelers()
+  }, [])
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
     const trimmed = name.trim()
     if (!trimmed) {
@@ -16,6 +30,11 @@ export default function LoginPage({ onLogin }) {
       setTimeout(() => setShaking(false), 500)
       return
     }
+
+    if (!presets.includes(trimmed)) {
+      await supabase.from('travelers').insert({ name: trimmed })
+    }
+
     localStorage.setItem('travelplan_user', trimmed)
     onLogin(trimmed)
   }
@@ -69,7 +88,7 @@ export default function LoginPage({ onLogin }) {
 
           {/* Quick select presets */}
           <div className="login-presets">
-            {PRESET_NAMES.map((n) => (
+            {presets.length > 0 && presets.map((n) => (
               <button
                 key={n}
                 type="button"
