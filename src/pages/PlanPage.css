@@ -1,0 +1,199 @@
+.plan-page {
+  padding: 1.25rem 1rem;
+  padding-bottom: calc(var(--nav-height) + 2rem);
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.plan-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.plan-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Day group */
+.day-group {
+  margin-bottom: 1.25rem;
+}
+
+.day-label-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.day-label-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent-primary);
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  padding: 0.2rem 0.65rem;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+.day-label-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+/* Plan card */
+.plan-card {
+  background: var(--gradient-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+  box-shadow: var(--shadow-card);
+}
+
+.plan-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 0.9rem 1rem;
+  cursor: pointer;
+  gap: 0.5rem;
+}
+
+.plan-card-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.plan-time {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent-teal);
+  background: rgba(20, 184, 166, 0.12);
+  border: 1px solid rgba(20, 184, 166, 0.25);
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.plan-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.plan-location {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.plan-card-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.plan-author {
+  font-size: 0.68rem;
+  color: var(--accent-secondary);
+  font-weight: 600;
+}
+
+.plan-chevron {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+}
+
+/* Card body */
+.plan-card-body {
+  overflow: hidden;
+}
+
+.plan-card-body-inner {
+  border-top: 1px solid var(--border-subtle);
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.plan-accom {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.plan-accom-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.plan-accom-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.plan-accom-img {
+  width: 100%;
+  border-radius: var(--radius-md);
+  max-height: 200px;
+  object-fit: cover;
+  border: 1px solid var(--border-subtle);
+}
+
+.plan-notes {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.plan-notes p {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  flex: 1;
+}
+
+.plan-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+/* Image preview in form */
+.img-preview-wrap {
+  margin-top: -0.5rem;
+  margin-bottom: 1rem;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+}
+
+.img-preview {
+  width: 100%;
+  max-height: 160px;
+  object-fit: cover;
+  display: block;
+}
