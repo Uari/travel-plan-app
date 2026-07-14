@@ -42,6 +42,7 @@ export default function AccommodationPage({ user, tripId, membersMap, isAdmin })
       })
       setAccommodations(sorted)
     } else {
+      console.error("Accommodation fetch error:", error)
       setAccommodations([])
     }
     setLoading(false)

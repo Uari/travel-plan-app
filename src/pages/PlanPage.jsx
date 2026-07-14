@@ -47,6 +47,7 @@ export default function PlanPage({ user, tripId, membersMap, isAdmin }) {
     if (!error && data) {
       setPlans(data)
     } else {
+      console.error("Plan fetch error:", error)
       setPlans([])
     }
     setLoading(false)
