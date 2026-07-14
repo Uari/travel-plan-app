@@ -86,13 +86,13 @@ export default function KoreaMapSVG({ result, dartState }) {
       >
         <defs>
           <radialGradient id="seaBg3" cx="50%" cy="45%" r="65%">
-            <stop offset="0%" stopColor="#0c1f3d" />
-            <stop offset="100%" stopColor="#050c1a" />
+            <stop offset="0%" stopColor="var(--map-sea-start)" />
+            <stop offset="100%" stopColor="var(--map-sea-end)" />
           </radialGradient>
 
           <linearGradient id="landFill3" x1="20%" y1="0%" x2="80%" y2="100%">
-            <stop offset="0%" stopColor="#1a2d4e" />
-            <stop offset="100%" stopColor="#0f1e34" />
+            <stop offset="0%" stopColor="var(--map-land-start)" />
+            <stop offset="100%" stopColor="var(--map-land-end)" />
           </linearGradient>
 
           <filter id="gs3" x="-50%" y="-50%" width="200%" height="200%">
@@ -122,12 +122,12 @@ export default function KoreaMapSVG({ result, dartState }) {
           </filter>
 
           <pattern id="seaDots3" x="0" y="0" width="16" height="16" patternUnits="userSpaceOnUse">
-            <circle cx="1" cy="1" r="0.7" fill="rgba(99,102,241,0.06)" />
+            <circle cx="1" cy="1" r="0.7" fill="var(--map-dots)" />
           </pattern>
 
           <radialGradient id="vig3" cx="50%" cy="50%" r="70%">
             <stop offset="55%" stopColor="transparent" />
-            <stop offset="100%" stopColor="rgba(5,12,26,0.65)" />
+            <stop offset="100%" stopColor="var(--map-vig)" />
           </radialGradient>
         </defs>
 
@@ -146,13 +146,13 @@ export default function KoreaMapSVG({ result, dartState }) {
         ))}
 
         {/* 바다 이름 */}
-        <text x="12" y={H / 2} fill="rgba(99,102,241,0.15)" fontSize="10"
+        <text x="12" y={H / 2} fill="var(--map-text-sea)" fontSize="10"
           fontFamily="sans-serif" fontWeight="700"
           transform={`rotate(-90 12,${H / 2})`} textAnchor="middle" letterSpacing="3">서  해</text>
-        <text x={W - 12} y={H / 2} fill="rgba(99,102,241,0.15)" fontSize="10"
+        <text x={W - 12} y={H / 2} fill="var(--map-text-sea)" fontSize="10"
           fontFamily="sans-serif" fontWeight="700"
           transform={`rotate(90 ${W - 12},${H / 2})`} textAnchor="middle" letterSpacing="3">동  해</text>
-        <text x={W / 2} y={H - 8} fill="rgba(99,102,241,0.1)" fontSize="9"
+        <text x={W / 2} y={H - 8} fill="var(--map-text-sea)" fontSize="9"
           fontFamily="sans-serif" fontWeight="700" textAnchor="middle" letterSpacing="4">남    해</text>
 
         {/* 로딩 표시 제거 (즉시 렌더링되므로 불필요) */}
@@ -234,31 +234,31 @@ export default function KoreaMapSVG({ result, dartState }) {
 
         {/* 독도 */}
         <g>
-          <circle cx={W - 24} cy="148" r="5.5" fill="#0c1f3d" stroke="rgba(99,102,241,0.6)" strokeWidth="1.5" />
-          <circle cx={W - 16} cy="142" r="3.5" fill="#0c1f3d" stroke="rgba(99,102,241,0.4)" strokeWidth="1" />
-          <text x={W - 8} y="141" fill="rgba(129,140,248,0.5)" fontSize="7.5"
+          <circle cx={W - 24} cy="148" r="5.5" fill="var(--map-compass-bg)" stroke="var(--map-compass-stroke)" strokeWidth="1.5" />
+          <circle cx={W - 16} cy="142" r="3.5" fill="var(--map-compass-bg)" stroke="var(--map-compass-stroke)" strokeWidth="1" />
+          <text x={W - 8} y="141" fill="var(--map-compass-text)" fontSize="7.5"
             fontFamily="sans-serif" fontWeight="700">독도</text>
         </g>
 
         {/* 나침반 */}
         <g transform={`translate(${W - 24}, ${H + 52})`}>
-          <circle r="19" fill="rgba(8,18,38,0.9)" stroke="rgba(99,102,241,0.35)" strokeWidth="1.5" />
-          <text y="-7.5" fontSize="7.5" fill="rgba(129,140,248,0.85)" textAnchor="middle"
+          <circle r="19" fill="var(--map-compass-bg)" stroke="var(--map-compass-stroke)" strokeWidth="1.5" />
+          <text y="-7.5" fontSize="7.5" fill="var(--map-compass-text)" textAnchor="middle"
             fontFamily="sans-serif" fontWeight="800">N</text>
-          <text y="14" fontSize="6.5" fill="rgba(129,140,248,0.3)" textAnchor="middle" fontFamily="sans-serif">S</text>
-          <text x="-11" y="3.5" fontSize="6.5" fill="rgba(129,140,248,0.3)" textAnchor="middle" fontFamily="sans-serif">W</text>
-          <text x="11" y="3.5" fontSize="6.5" fill="rgba(129,140,248,0.3)" textAnchor="middle" fontFamily="sans-serif">E</text>
-          <polygon points="0,-12 2.5,0 0,4.5 -2.5,0" fill="#818cf8" filter="url(#gsoft3)" />
-          <polygon points="0,12 2.5,0 0,-4.5 -2.5,0" fill="rgba(129,140,248,0.2)" />
+          <text y="14" fontSize="6.5" fill="var(--map-text-sea)" textAnchor="middle" fontFamily="sans-serif">S</text>
+          <text x="-11" y="3.5" fontSize="6.5" fill="var(--map-text-sea)" textAnchor="middle" fontFamily="sans-serif">W</text>
+          <text x="11" y="3.5" fontSize="6.5" fill="var(--map-text-sea)" textAnchor="middle" fontFamily="sans-serif">E</text>
+          <polygon points="0,-12 2.5,0 0,4.5 -2.5,0" fill="var(--accent-secondary)" filter="url(#gsoft3)" />
+          <polygon points="0,12 2.5,0 0,-4.5 -2.5,0" fill="var(--border-active)" />
           <circle r="2" fill="white" />
         </g>
 
         {/* 스케일 바 */}
         <g transform={`translate(18, ${H + 52})`}>
-          <line x1="0" y1="0" x2="55" y2="0" stroke="rgba(129,140,248,0.45)" strokeWidth="1.5" />
-          <line x1="0" y1="-4" x2="0" y2="4" stroke="rgba(129,140,248,0.45)" strokeWidth="1.5" />
-          <line x1="55" y1="-4" x2="55" y2="4" stroke="rgba(129,140,248,0.45)" strokeWidth="1.5" />
-          <text x="27.5" y="-7.5" fontSize="7" fill="rgba(129,140,248,0.5)"
+          <line x1="0" y1="0" x2="55" y2="0" stroke="var(--map-compass-stroke)" strokeWidth="1.5" />
+          <line x1="0" y1="-4" x2="0" y2="4" stroke="var(--map-compass-stroke)" strokeWidth="1.5" />
+          <line x1="55" y1="-4" x2="55" y2="4" stroke="var(--map-compass-stroke)" strokeWidth="1.5" />
+          <text x="27.5" y="-7.5" fontSize="7" fill="var(--map-compass-text)"
             textAnchor="middle" fontFamily="monospace">100 km</text>
         </g>
       </svg>
