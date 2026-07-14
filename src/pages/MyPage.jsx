@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase.js'
 import { hashPassword } from '../lib/hash.js'
 import './MyPage.css'
 
-export default function MyPage({ user, onLogout }) {
+export default function MyPage({ user, onLogout, theme, toggleTheme }) {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('password') // 'password' or 'delete'
   
@@ -137,6 +137,22 @@ export default function MyPage({ user, onLogout }) {
           <div className="profile-avatar">👤</div>
           <h3>{user.name}</h3>
           <p className="profile-id">ID: {user.id}</p>
+        </div>
+
+        <div className="mypage-settings" style={{ marginBottom: '1.5rem', background: 'var(--bg-elevated)', padding: '1rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>화면 테마 설정</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>라이트 모드와 다크 모드를 전환합니다.</div>
+            </div>
+            <button 
+              className="btn btn-secondary" 
+              onClick={toggleTheme}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.8rem' }}
+            >
+              {theme === 'light' ? '☀️ 밝게' : '🌙 어둡게'}
+            </button>
+          </div>
         </div>
 
         <div className="mypage-tabs">

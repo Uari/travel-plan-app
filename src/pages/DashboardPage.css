@@ -68,7 +68,7 @@
   position: relative;
   border-radius: var(--radius-xl);
   overflow: hidden;
-  background: #060d1f;
+  background: var(--bg-map);
   border: 1px solid rgba(99, 102, 241, 0.2);
   box-shadow:
     0 0 0 1px rgba(99, 102, 241, 0.1),
@@ -82,7 +82,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: radial-gradient(ellipse at 50% 40%, #0d1f3c 0%, #060d1f 70%);
+  background: var(--gradient-map);
   height: 100%;
   width: 100%;
   position: relative;

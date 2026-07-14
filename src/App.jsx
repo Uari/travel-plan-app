@@ -23,6 +23,19 @@ const TABS = [
 export default function App() {
   const navigate = useNavigate()
   
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('travelplan_theme') || 'dark'
+  })
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('travelplan_theme', theme)
+  }, [theme])
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark')
+  }
+  
   const [user, setUser] = useState(() => {
     // Read new JSON session
     const sessionStr = localStorage.getItem('travelplan_session')
@@ -57,7 +70,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Navigate to="/lobby" replace />} />
       <Route path="/lobby" element={<LobbyPage user={user} onLogout={handleLogout} />} />
-      <Route path="/mypage" element={<MyPage user={user} onLogout={handleLogout} />} />
+      <Route path="/mypage" element={<MyPage user={user} onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />} />
       <Route path="/trip/:tripId/*" element={<TripLayout user={user} onLogout={handleLogout} />} />
       <Route path="*" element={<Navigate to="/lobby" replace />} />
     </Routes>
