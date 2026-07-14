@@ -1,12 +1,13 @@
 .dashboard-page {
   padding: 1.25rem 1rem;
   padding-bottom: calc(var(--nav-height) + 1rem);
-  max-width: 1200px;
+  max-width: 600px;
   margin: 0 auto;
   flex: 1;
   display: flex;
   flex-direction: column;
   width: 100%;
+  min-height: 0;
 }
 
 /* Header */
@@ -57,6 +58,7 @@
   flex-direction: column;
   position: relative;
   min-height: 0;
+  max-height: calc(100dvh - 220px);
 }
 
 /* Map */
@@ -71,6 +73,7 @@
     0 0 0 1px rgba(99, 102, 241, 0.1),
     0 8px 40px rgba(0, 0, 0, 0.6),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  min-height: 0;
 }
 
 .korea-map-wrapper {
@@ -80,13 +83,16 @@
   align-items: center;
   background: radial-gradient(ellipse at 50% 40%, #0d1f3c 0%, #060d1f 70%);
   height: 100%;
+  width: 100%;
+  position: relative;
 }
 
 .korea-map-svg {
-  width: 100%;
-  max-width: 100%;
-  height: 100%;
-  max-height: 100%;
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  width: calc(100% - 1rem);
+  height: calc(100% - 1rem);
   transition: filter 0.3s ease;
 }
 

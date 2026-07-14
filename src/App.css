@@ -11,6 +11,9 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
+  gap: 0.5rem;
+  overflow-x: auto;
 }
 
 .top-bar-logo {
@@ -32,6 +35,20 @@
   display: flex;
   align-items: center;
   gap: 0.6rem;
+}
+
+.mypage-btn {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-md);
+  transition: background 0.2s;
+}
+
+.mypage-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .top-bar-user {

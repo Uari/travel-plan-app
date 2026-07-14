@@ -3,26 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase.js'
 import './PlanPage.css'
 
-const SAMPLE_PLANS = [
-  {
-    id: 'sample-1',
-    created_by: '시스템',
-    day_label: 'Day 1',
-    time_label: '10:00',
-    title: '숙소 체크인',
-    location: '강릉 해변 게스트하우스',
-    accommodation_name: '오션뷰 게스트하우스',
-    accommodation_img_url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600',
-    notes: '체크인 시간 오후 3시 이후',
-  },
-]
-
-export default function PlanPage({ user }) {
+export default function PlanPage({ user, tripId, membersMap, isAdmin }) {
   const [plans, setPlans] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editItem, setEditItem] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
+  const [startDate, setStartDate] = useState(null)
 
   const [form, setForm] = useState({
     day_label: 'Day 1',
@@ -35,17 +22,32 @@ export default function PlanPage({ user }) {
   })
 
   useEffect(() => {
-    loadPlans()
-  }, [])
+    if (tripId) {
+      loadTripInfo()
+      loadPlans()
+    }
+  }, [tripId])
+
+  const loadTripInfo = async () => {
+    const { data } = await supabase.from('trips').select('start_date').eq('id', tripId).single()
+    if (data) {
+      setStartDate(data.start_date)
+    }
+  }
 
   const loadPlans = async () => {
     setLoading(true)
-    const { data, error } = await supabase.from('plans').select('*').order('day_label').order('time_label')
-    if (error || !data) {
-      // Supabase 미설정 시 샘플 데이터 표시
-      setPlans(SAMPLE_PLANS)
-    } else {
+    const { data, error } = await supabase
+      .from('plans')
+      .select('*')
+      .eq('trip_id', tripId)
+      .order('day_label')
+      .order('time_label')
+      
+    if (!error && data) {
       setPlans(data)
+    } else {
+      setPlans([])
     }
     setLoading(false)
   }
@@ -66,12 +68,17 @@ export default function PlanPage({ user }) {
     e.preventDefault()
     if (!form.title.trim()) return
 
-    const payload = { ...form, created_by: user }
+    const payload = { 
+      ...form, 
+      created_by: user.name, // Legacy
+      user_id: user.id,      // New ID
+      trip_id: tripId 
+    }
 
     if (editItem) {
       const { error } = await supabase.from('plans').update(payload).eq('id', editItem.id)
       if (error) {
-        // Local update fallback
+        console.error(error)
         setPlans((prev) => prev.map((p) => p.id === editItem.id ? { ...p, ...payload } : p))
       } else {
         await loadPlans()
@@ -79,7 +86,7 @@ export default function PlanPage({ user }) {
     } else {
       const { error } = await supabase.from('plans').insert(payload)
       if (error) {
-        // Local insert fallback
+        console.error(error)
         setPlans((prev) => [...prev, { id: Date.now().toString(), ...payload }])
       } else {
         await loadPlans()
@@ -91,6 +98,7 @@ export default function PlanPage({ user }) {
   const handleDelete = async (id) => {
     const { error } = await supabase.from('plans').delete().eq('id', id)
     if (error) {
+      console.error(error)
       setPlans((prev) => prev.filter((p) => p.id !== id))
     } else {
       await loadPlans()
@@ -106,6 +114,18 @@ export default function PlanPage({ user }) {
   }, {})
 
   const days = Object.keys(grouped).sort()
+
+  const calculateDateString = (dayLabel) => {
+    if (!startDate) return ''
+    const match = dayLabel.match(/Day\s*(\d+)/i)
+    if (match) {
+      const dayNum = parseInt(match[1], 10)
+      const d = new Date(startDate)
+      d.setDate(d.getDate() + (dayNum - 1))
+      return ` (${d.getMonth() + 1}월 ${d.getDate()}일)`
+    }
+    return ''
+  }
 
   return (
     <div className="plan-page">
@@ -132,7 +152,7 @@ export default function PlanPage({ user }) {
           {days.map((day) => (
             <div key={day} className="day-group">
               <div className="day-label-row">
-                <span className="day-label-badge">{day}</span>
+                <span className="day-label-badge">{day}{calculateDateString(day)}</span>
                 <div className="day-label-line" />
               </div>
               {grouped[day].map((plan) => (
@@ -140,6 +160,8 @@ export default function PlanPage({ user }) {
                   key={plan.id}
                   plan={plan}
                   expanded={expandedId === plan.id}
+                  membersMap={membersMap}
+                  isAdmin={isAdmin}
                   onToggle={() => setExpandedId(expandedId === plan.id ? null : plan.id)}
                   onEdit={() => openEdit(plan)}
                   onDelete={() => handleDelete(plan.id)}
@@ -262,7 +284,7 @@ export default function PlanPage({ user }) {
                   />
                 </div>
 
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
                   <button
                     type="button"
                     className="btn btn-secondary"
@@ -289,7 +311,14 @@ export default function PlanPage({ user }) {
   )
 }
 
-function PlanCard({ plan, expanded, onToggle, onEdit, onDelete, currentUser }) {
+function PlanCard({ plan, expanded, onToggle, onEdit, onDelete, currentUser, membersMap, isAdmin }) {
+  const memberInfo = membersMap ? membersMap[plan.user_id] : null
+  const displayAuthor = memberInfo 
+    ? `${memberInfo.name}${memberInfo.is_deleted ? '(탈퇴)' : ''}`
+    : (plan.created_by || '알 수 없음')
+    
+  const canEdit = isAdmin || plan.user_id === currentUser.id || plan.created_by === currentUser.name
+
   return (
     <motion.div
       className="plan-card"
@@ -313,7 +342,9 @@ function PlanCard({ plan, expanded, onToggle, onEdit, onDelete, currentUser }) {
           </div>
         </div>
         <div className="plan-card-right">
-          <span className="plan-author">{plan.created_by}</span>
+          <span className="plan-author" style={{ opacity: memberInfo?.is_deleted ? 0.6 : 1, color: memberInfo?.is_deleted ? '#ef4444' : 'inherit' }}>
+            {displayAuthor}
+          </span>
           <span className="plan-chevron">{expanded ? '▲' : '▼'}</span>
         </div>
       </div>
@@ -351,10 +382,12 @@ function PlanCard({ plan, expanded, onToggle, onEdit, onDelete, currentUser }) {
                 </div>
               )}
 
-              <div className="plan-actions">
-                <button id={`plan-edit-${plan.id}`} className="btn btn-secondary btn-sm" onClick={onEdit}>✏️ 수정</button>
-                <button id={`plan-del-${plan.id}`} className="btn btn-danger btn-sm" onClick={onDelete}>🗑️ 삭제</button>
-              </div>
+              {canEdit && (
+                <div className="plan-actions">
+                  <button id={`plan-edit-${plan.id}`} className="btn btn-secondary btn-sm" onClick={onEdit}>✏️ 수정</button>
+                  <button id={`plan-del-${plan.id}`} className="btn btn-danger btn-sm" onClick={onDelete}>🗑️ 삭제</button>
+                </div>
+              )}
             </div>
           </motion.div>
         )}

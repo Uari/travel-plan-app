@@ -1,8 +1,9 @@
 .expense-page {
   padding: 1.25rem 1rem;
   padding-bottom: calc(var(--nav-height) + 2rem);
-  max-width: 480px;
+  max-width: 800px;
   margin: 0 auto;
+  width: 100%;
 }
 
 .expense-header {
@@ -43,12 +44,14 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  white-space: nowrap;
 }
 
 .summary-value {
   font-size: 1.5rem;
   font-weight: 800;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .gradient-text {
@@ -257,4 +260,38 @@
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--text-muted);
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 480px) {
+  .summary-label {
+    font-size: 0.65rem;
+    white-space: nowrap;
+  }
+
+  .summary-value {
+    font-size: 1rem;
+    white-space: nowrap;
+    letter-spacing: -0.5px;
+  }
+  
+  .stepper-value {
+    font-size: 1rem;
+  }
+  
+  .stepper-unit {
+    font-size: 0.75rem;
+  }
+  
+  .expense-cat-icon {
+    font-size: 1.15rem;
+  }
+  
+  .expense-label {
+    font-size: 0.85rem;
+  }
+  
+  .expense-amount {
+    font-size: 0.9rem;
+  }
 }

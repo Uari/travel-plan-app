@@ -1,0 +1,245 @@
+import React, { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabase.js'
+import { hashPassword } from '../lib/hash.js'
+import './MyPage.css'
+
+export default function MyPage({ user, onLogout }) {
+  const navigate = useNavigate()
+  const [activeTab, setActiveTab] = useState('password') // 'password' or 'delete'
+  
+  // Password change state
+  const [currentPw, setCurrentPw] = useState('')
+  const [newPw, setNewPw] = useState('')
+  const [newPwConfirm, setNewPwConfirm] = useState('')
+  
+  // Delete account state
+  const [deletePw, setDeletePw] = useState('')
+  
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
+  const [isError, setIsError] = useState(false)
+
+  const showMessage = (msg, error = false) => {
+    setMessage(msg)
+    setIsError(error)
+    setTimeout(() => setMessage(''), 3000)
+  }
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault()
+    if (!currentPw || !newPw || !newPwConfirm) {
+      showMessage('모든 필드를 입력해주세요.', true)
+      return
+    }
+    if (newPw !== newPwConfirm) {
+      showMessage('새 비밀번호가 일치하지 않습니다.', true)
+      return
+    }
+
+    setLoading(true)
+    try {
+      const hashedCurrent = await hashPassword(currentPw)
+      
+      // Verify current password
+      const { data: userData, error: fetchError } = await supabase
+        .from('users')
+        .select('password')
+        .eq('id', user.id)
+        .single()
+
+      if (fetchError || !userData) throw new Error('사용자 조회 실패')
+      
+      if (userData.password !== hashedCurrent) {
+        showMessage('현재 비밀번호가 틀렸습니다.', true)
+        setLoading(false)
+        return
+      }
+
+      // Update password
+      const hashedNew = await hashPassword(newPw)
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ password: hashedNew })
+        .eq('id', user.id)
+
+      if (updateError) throw updateError
+
+      showMessage('비밀번호가 성공적으로 변경되었습니다.')
+      setCurrentPw('')
+      setNewPw('')
+      setNewPwConfirm('')
+    } catch (err) {
+      console.error(err)
+      showMessage('비밀번호 변경 중 오류가 발생했습니다.', true)
+    }
+    setLoading(false)
+  }
+
+  const handleDeleteAccount = async (e) => {
+    e.preventDefault()
+    if (!deletePw) {
+      showMessage('비밀번호를 입력해주세요.', true)
+      return
+    }
+
+    if (!window.confirm('정말 탈퇴하시겠습니까? (이전 여행 데이터는 남지만 복구 불가능합니다)')) return
+
+    setLoading(true)
+    try {
+      const hashedPw = await hashPassword(deletePw)
+      
+      // Verify password
+      const { data: userData, error: fetchError } = await supabase
+        .from('users')
+        .select('password')
+        .eq('id', user.id)
+        .single()
+
+      if (fetchError || !userData) throw new Error('사용자 조회 실패')
+      
+      if (userData.password !== hashedPw) {
+        showMessage('비밀번호가 틀렸습니다.', true)
+        setLoading(false)
+        return
+      }
+
+      // Soft Delete
+      const { error: deleteError } = await supabase
+        .from('users')
+        .update({ is_deleted: true })
+        .eq('id', user.id)
+
+      if (deleteError) throw deleteError
+
+      alert('계정이 탈퇴되었습니다. 이용해 주셔서 감사합니다.')
+      onLogout() // Logs out and redirects to /
+    } catch (err) {
+      console.error(err)
+      showMessage('회원 탈퇴 중 오류가 발생했습니다.', true)
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="mypage-container">
+      <header className="mypage-header">
+        <button className="back-btn" onClick={() => navigate(-1)}>
+          ← 뒤로가기
+        </button>
+        <h2>마이페이지</h2>
+        <div style={{width: 60}}></div> {/* Spacer */}
+      </header>
+
+      <main className="mypage-content">
+        <div className="mypage-profile">
+          <div className="profile-avatar">👤</div>
+          <h3>{user.name}</h3>
+          <p className="profile-id">ID: {user.id}</p>
+        </div>
+
+        <div className="mypage-tabs">
+          <button 
+            className={`mypage-tab ${activeTab === 'password' ? 'active' : ''}`}
+            onClick={() => setActiveTab('password')}
+          >
+            비밀번호 변경
+          </button>
+          <button 
+            className={`mypage-tab ${activeTab === 'delete' ? 'active' : ''}`}
+            onClick={() => setActiveTab('delete')}
+          >
+            회원 탈퇴
+          </button>
+        </div>
+
+        <div className="mypage-forms">
+          <AnimatePresence mode="wait">
+            {message && (
+              <motion.div 
+                className={`mypage-alert ${isError ? 'error' : 'success'}`}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                {message}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {activeTab === 'password' ? (
+            <motion.form 
+              key="password-form"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              onSubmit={handleChangePassword}
+              className="mypage-form"
+            >
+              <div className="input-group">
+                <label>현재 비밀번호</label>
+                <input 
+                  type="password" 
+                  className="input" 
+                  value={currentPw}
+                  onChange={(e) => setCurrentPw(e.target.value)}
+                  maxLength={30}
+                />
+              </div>
+              <div className="input-group">
+                <label>새 비밀번호</label>
+                <input 
+                  type="password" 
+                  className="input" 
+                  value={newPw}
+                  onChange={(e) => setNewPw(e.target.value)}
+                  maxLength={30}
+                />
+              </div>
+              <div className="input-group">
+                <label>새 비밀번호 확인</label>
+                <input 
+                  type="password" 
+                  className="input" 
+                  value={newPwConfirm}
+                  onChange={(e) => setNewPwConfirm(e.target.value)}
+                  maxLength={30}
+                />
+              </div>
+              <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
+                {loading ? '변경 중...' : '비밀번호 변경하기'}
+              </button>
+            </motion.form>
+          ) : (
+            <motion.form 
+              key="delete-form"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              onSubmit={handleDeleteAccount}
+              className="mypage-form"
+            >
+              <div className="warning-box">
+                ⚠️ 탈퇴 시 로그인할 수 없게 되며, 삭제된 계정은 복구할 수 없습니다. 기존 여행 데이터(유령 상태)는 방에 남게 됩니다.
+              </div>
+              <div className="input-group">
+                <label>본인 확인 (비밀번호)</label>
+                <input 
+                  type="password" 
+                  className="input" 
+                  value={deletePw}
+                  onChange={(e) => setDeletePw(e.target.value)}
+                  maxLength={30}
+                />
+              </div>
+              <button type="submit" className="btn btn-danger btn-full" disabled={loading}>
+                {loading ? '처리 중...' : '탈퇴하기'}
+              </button>
+            </motion.form>
+          )}
+        </div>
+      </main>
+    </div>
+  )
+}

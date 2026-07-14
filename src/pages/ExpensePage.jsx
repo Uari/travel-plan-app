@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase.js'
 import './ExpensePage.css'
@@ -12,31 +12,57 @@ const CATEGORIES = [
   { id: 'etc', label: '📦 기타', color: 'var(--text-muted)' },
 ]
 
-const SAMPLE_EXPENSES = [
-  { id: 'e1', created_by: '여행자 1', label: '숙소 예약금', amount: 90000, category: 'accommodation' },
-  { id: 'e2', created_by: '여행자 2', label: '렌터카', amount: 60000, category: 'transport' },
-]
-
-export default function ExpensePage({ user }) {
+export default function ExpensePage({ user, tripId, membersMap, isAdmin }) {
   const [expenses, setExpenses] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({ label: '', amount: '', category: 'etc' })
-  const [memberCount, setMemberCount] = useState(3)
+  const [memberCount, setMemberCount] = useState(1)
+  
+  // Debounce ref
+  const updateTimeoutRef = useRef(null)
 
   useEffect(() => {
-    loadExpenses()
-  }, [])
+    if (tripId) {
+      loadExpenses()
+      loadTripInfo()
+    }
+  }, [tripId])
+
+  const loadTripInfo = async () => {
+    const { data } = await supabase.from('trips').select('member_count').eq('id', tripId).single()
+    if (data) {
+      setMemberCount(data.member_count || 1)
+    }
+  }
 
   const loadExpenses = async () => {
     setLoading(true)
-    const { data, error } = await supabase.from('expenses').select('*').order('created_at')
-    if (error || !data) {
-      setExpenses(SAMPLE_EXPENSES)
-    } else {
+    const { data, error } = await supabase
+      .from('expenses')
+      .select('*')
+      .eq('trip_id', tripId)
+      .order('created_at')
+      
+    if (!error && data) {
       setExpenses(data)
+    } else {
+      setExpenses([])
     }
     setLoading(false)
+  }
+
+  const handleMemberCountChange = (newCount) => {
+    if (newCount < 1) return
+    setMemberCount(newCount)
+
+    // Debounce DB update
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current)
+    }
+    updateTimeoutRef.current = setTimeout(async () => {
+      await supabase.from('trips').update({ member_count: newCount }).eq('id', tripId)
+    }, 500)
   }
 
   const handleSubmit = async (e) => {
@@ -46,10 +72,13 @@ export default function ExpensePage({ user }) {
       label: form.label.trim(),
       amount: Number(form.amount),
       category: form.category,
-      created_by: user,
+      created_by: user.name, // Keep for backward compatibility
+      user_id: user.id,      // New ID-based foreign key
+      trip_id: tripId
     }
     const { error } = await supabase.from('expenses').insert(payload)
     if (error) {
+      console.error(error)
       setExpenses((prev) => [...prev, { id: Date.now().toString(), ...payload }])
     } else {
       await loadExpenses()
@@ -61,6 +90,7 @@ export default function ExpensePage({ user }) {
   const handleDelete = async (id) => {
     const { error } = await supabase.from('expenses').delete().eq('id', id)
     if (error) {
+      console.error(error)
       setExpenses((prev) => prev.filter((e) => e.id !== id))
     } else {
       await loadExpenses()
@@ -102,7 +132,7 @@ export default function ExpensePage({ user }) {
               <button 
                 type="button" 
                 className="stepper-btn" 
-                onClick={() => setMemberCount(prev => Math.max(1, (Number(prev) || 1) - 1))}
+                onClick={() => handleMemberCountChange(memberCount - 1)}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
               </button>
@@ -113,7 +143,7 @@ export default function ExpensePage({ user }) {
               <button 
                 type="button" 
                 className="stepper-btn" 
-                onClick={() => setMemberCount(prev => (Number(prev) || 1) + 1)}
+                onClick={() => handleMemberCountChange(memberCount + 1)}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
               </button>
@@ -150,12 +180,12 @@ export default function ExpensePage({ user }) {
       </div>
 
       {/* Expense list */}
-        {loading ? (
-          <div className="empty-state">
-            <div className="empty-icon" style={{ animation: 'floatLoading 1.5s ease-in-out infinite' }}>✈️</div>
-            <p>여행 데이터를 불러오는 중...</p>
-          </div>
-        ) : expenses.length === 0 ? (
+      {loading ? (
+        <div className="empty-state">
+          <div className="empty-icon" style={{ animation: 'floatLoading 1.5s ease-in-out infinite' }}>✈️</div>
+          <p>여행 데이터를 불러오는 중...</p>
+        </div>
+      ) : expenses.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">💸</div>
           <p>아직 비용 내역이 없어요.</p>
@@ -165,6 +195,12 @@ export default function ExpensePage({ user }) {
         <div className="expense-list">
           {expenses.map((expense) => {
             const cat = CATEGORIES.find((c) => c.id === expense.category) || CATEGORIES[5]
+            const memberInfo = membersMap[expense.user_id]
+            const displayAuthor = memberInfo 
+              ? `${memberInfo.name}${memberInfo.is_deleted ? ' (탈퇴함)' : ''}`
+              : (expense.created_by || '알 수 없음')
+            const canDelete = isAdmin || expense.user_id === user.id || expense.created_by === user.name
+
             return (
               <motion.div
                 key={expense.id}
@@ -178,9 +214,9 @@ export default function ExpensePage({ user }) {
                     {cat.label.split(' ')[0]}
                   </span>
                   <div>
-                    <div className="expense-label">{expense.label}</div>
+                    <div className="expense-label" style={{ opacity: memberInfo?.is_deleted ? 0.6 : 1 }}>{expense.label}</div>
                     <div className="expense-meta">
-                      <span>{expense.created_by}</span>
+                      <span style={{ color: memberInfo?.is_deleted ? '#ef4444' : 'inherit' }}>{displayAuthor}</span>
                       <span>·</span>
                       <span style={{ color: cat.color }}>{cat.label.split(' ')[1]}</span>
                     </div>
@@ -188,11 +224,13 @@ export default function ExpensePage({ user }) {
                 </div>
                 <div className="expense-item-right">
                   <span className="expense-amount">{Number(expense.amount).toLocaleString()}원</span>
-                  <button
-                    id={`expense-del-${expense.id}`}
-                    className="expense-del-btn"
-                    onClick={() => handleDelete(expense.id)}
-                  >✕</button>
+                  {canDelete && (
+                    <button
+                      id={`expense-del-${expense.id}`}
+                      className="expense-del-btn"
+                      onClick={() => handleDelete(expense.id)}
+                    >✕</button>
+                  )}
                 </div>
               </motion.div>
             )

@@ -135,35 +135,32 @@
   text-align: center;
 }
 
-/* Preset buttons */
-.login-presets {
+/* Toggle Button */
+.login-toggle-container {
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.25rem;
-  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 1.25rem;
 }
 
-.login-preset-btn {
-  flex: 1;
-  min-width: 80px;
-  padding: 0.4rem 0.5rem;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-elevated);
+.login-toggle-btn {
+  background: none;
+  border: none;
   color: var(--text-secondary);
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   font-family: var(--font-base);
   cursor: pointer;
   transition: all var(--transition);
-  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 4px;
 }
 
-.login-preset-btn:active,
-.login-preset-btn.active {
-  background: rgba(99, 102, 241, 0.2);
-  border-color: var(--accent-primary);
+.login-toggle-btn:hover {
   color: var(--accent-primary);
-  font-weight: 700;
+  text-decoration-color: var(--accent-primary);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .login-submit {
@@ -179,3 +176,4 @@
   line-height: 1.6;
   margin-top: 1.25rem;
 }
+

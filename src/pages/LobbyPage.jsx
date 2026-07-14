@@ -1,0 +1,335 @@
+import React, { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabase.js'
+import './LobbyPage.css' // We will create this or use inline styles, let's create a minimal CSS
+
+export default function LobbyPage({ user, onLogout }) {
+  const [trips, setTrips] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showJoinModal, setShowJoinModal] = useState(false)
+  
+  // Create Form
+  const [newTripName, setNewTripName] = useState('')
+  const [newTripDate, setNewTripDate] = useState('')
+  
+  // Join Form
+  const [joinCode, setJoinCode] = useState('')
+  const [joinError, setJoinError] = useState('')
+
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    fetchMyTrips()
+  }, [user.id])
+
+  const fetchMyTrips = async () => {
+    setLoading(true)
+    // Fetch trips where user is a member
+    const { data, error } = await supabase
+      .from('trip_members')
+      .select(`
+        trip_id,
+        joined_at,
+        trips (
+          id,
+          name,
+          start_date,
+          member_count
+        )
+      `)
+      .eq('user_id', user.id)
+      .order('joined_at', { ascending: false })
+
+    if (!error && data) {
+      // data format: [{ trip_id, trips: { id, name, ... } }, ...]
+      const formattedTrips = data
+        .filter(item => item.trips) // filter out nulls if trip was deleted
+        .map(item => ({
+          ...item.trips,
+          joined_at: item.joined_at
+        }))
+      setTrips(formattedTrips)
+    }
+    setLoading(false)
+  }
+
+  const generateCode = () => {
+    return Math.random().toString(36).substring(2, 8).toUpperCase()
+  }
+
+  const handleCreateTrip = async (e) => {
+    e.preventDefault()
+    if (!newTripName.trim()) return
+
+    const newCode = generateCode()
+    const payload = {
+      id: newCode,
+      name: newTripName.trim(),
+      member_count: 1,
+      start_date: newTripDate || null,
+      admin_id: user.id
+    }
+
+    // Insert into trips
+    const { error: tripError } = await supabase.from('trips').insert(payload)
+    if (tripError) {
+      console.error(tripError)
+      alert("방 생성에 실패했습니다.")
+      return
+    }
+
+    // Insert into trip_members
+    await supabase.from('trip_members').insert({ trip_id: newCode, user_id: user.id, traveler_name: user.name })
+
+    // Go to trip
+    setShowCreateModal(false)
+    navigate(`/trip/${newCode}/dashboard`)
+  }
+
+  const handleJoinTrip = async (e) => {
+    e.preventDefault()
+    const code = joinCode.trim()
+    if (!code) return
+    setJoinError('')
+
+    // 1. Check if trip exists
+    const { data: trip, error: findError } = await supabase
+      .from('trips')
+      .select('*')
+      .eq('id', code)
+      .single()
+
+    if (findError || !trip) {
+      setJoinError('존재하지 않는 방 코드입니다.')
+      return
+    }
+
+    // 2. Join the trip
+    const { error: joinError } = await supabase
+      .from('trip_members')
+      .insert({ trip_id: code, user_id: user.id, traveler_name: user.name })
+
+    if (joinError && joinError.code !== '23505') { // 23505 is unique violation (already joined)
+      console.error(joinError)
+      setJoinError('방 입장에 실패했습니다.')
+      return
+    }
+
+    // 3. Increment member_count intelligently
+    const { count } = await supabase
+      .from('trip_members')
+      .select('*', { count: 'exact', head: true })
+      .eq('trip_id', code)
+    
+    const actualCount = count || 1
+    const newCount = Math.max(trip.member_count, actualCount)
+    
+    if (newCount > trip.member_count) {
+      await supabase.from('trips').update({ member_count: newCount }).eq('id', code)
+    }
+
+    setShowJoinModal(false)
+    navigate(`/trip/${code}/dashboard`)
+  }
+
+  const handleLeaveTrip = async (e, tripId, currentCount) => {
+    e.stopPropagation() // Prevent card click
+    const confirmed = window.confirm("정말 이 방에서 나가시겠습니까?\n방을 나가면 목록에서 사라집니다.")
+    if (!confirmed) return
+
+    // Remove from trip_members
+    const { error } = await supabase
+      .from('trip_members')
+      .delete()
+      .match({ trip_id: tripId, user_id: user.id })
+
+    if (error) {
+      console.error(error)
+      alert('방 나가기에 실패했습니다.')
+      return
+    }
+
+    // Decrement count
+    const newCount = Math.max(1, currentCount - 1)
+    await supabase.from('trips').update({ member_count: newCount }).eq('id', tripId)
+
+    // Refresh list
+    fetchMyTrips()
+  }
+
+  return (
+    <div className="lobby-page">
+      {/* Animated background blobs */}
+      <div className="login-blob login-blob-1" />
+      <div className="login-blob login-blob-2" />
+      
+      <header className="lobby-header">
+        <div className="lobby-logo">✈️ <span>여행플랜 로비</span></div>
+        <div className="lobby-user-area">
+          <button className="mypage-btn" onClick={() => navigate('/mypage')} style={{color: 'white', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600}}>
+            👤 {user.name}
+          </button>
+          <button className="logout-btn" onClick={onLogout}>나가기</button>
+        </div>
+      </header>
+
+      <main className="lobby-main">
+        <div className="lobby-actions">
+          <motion.button 
+            className="btn btn-primary lobby-action-btn"
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowCreateModal(true)}
+          >
+            <span>✨</span> 새 여행 방 만들기
+          </motion.button>
+          <motion.button 
+            className="btn btn-secondary lobby-action-btn"
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowJoinModal(true)}
+          >
+            <span>🤝</span> 초대 코드로 입장
+          </motion.button>
+        </div>
+
+        <div className="lobby-trip-list">
+          <h2>나의 여행 방</h2>
+          {loading ? (
+            <p className="loading-text">방 목록을 불러오는 중...</p>
+          ) : trips.length === 0 ? (
+            <div className="empty-state">
+              아직 참여 중인 여행 방이 없습니다.<br/>새로운 방을 만들거나 코드로 입장해보세요!
+            </div>
+          ) : (
+            <div className="trip-cards">
+              {trips.map(trip => (
+                <motion.div 
+                  key={trip.id} 
+                  className="trip-card"
+                  style={{ position: 'relative' }}
+                  whileHover={{ y: -4, boxShadow: '0 8px 24px rgba(0,0,0,0.1)' }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => navigate(`/trip/${trip.id}/dashboard`)}
+                >
+                  <button
+                    className="leave-trip-btn"
+                    onClick={(e) => handleLeaveTrip(e, trip.id, trip.member_count)}
+                    style={{
+                      position: 'absolute',
+                      top: '12px',
+                      right: '12px',
+                      background: 'rgba(239, 68, 68, 0.1)',
+                      color: '#ef4444',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '4px 8px',
+                      fontSize: '0.75rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      zIndex: 10
+                    }}
+                    title="방 나가기"
+                  >
+                    나가기
+                  </button>
+                  <h3>{trip.name}</h3>
+                  <div className="trip-card-meta">
+                    <span className="trip-code">코드: {trip.id}</span>
+                    {trip.start_date && <span className="trip-date">📅 {trip.start_date}</span>}
+                    <span className="trip-members">👥 {trip.member_count}명</span>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* Create Modal */}
+      <AnimatePresence>
+        {showCreateModal && (
+          <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowCreateModal(false)}>
+            <motion.div 
+              className="modal-sheet" 
+              initial={{ y: '100%' }} 
+              animate={{ y: 0 }} 
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="modal-handle" />
+              <div className="modal-title">✨ 새 여행 방 만들기</div>
+              <form onSubmit={handleCreateTrip}>
+                <div className="input-group">
+                  <label className="input-label">방 이름 (여행 제목)</label>
+                  <input 
+                    type="text" 
+                    className="input" 
+                    placeholder="예: 제주도 여름 휴가" 
+                    value={newTripName}
+                    onChange={(e) => setNewTripName(e.target.value)}
+                    required
+                    autoFocus
+                  />
+                </div>
+                <div className="input-group" style={{ marginTop: '1rem' }}>
+                  <label className="input-label">여행 시작일 (선택)</label>
+                  <input 
+                    type="date" 
+                    className="input" 
+                    value={newTripDate}
+                    onChange={(e) => setNewTripDate(e.target.value)}
+                  />
+                  <p className="text-xs text-muted mt-1">나중에 설정하셔도 됩니다.</p>
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '2rem' }}>
+                  <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowCreateModal(false)}>취소</button>
+                  <button type="submit" className="btn btn-primary" style={{ flex: 2 }} disabled={!newTripName.trim()}>만들기 🚀</button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Join Modal */}
+      <AnimatePresence>
+        {showJoinModal && (
+          <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowJoinModal(false)}>
+            <motion.div 
+              className="modal-sheet" 
+              initial={{ y: '100%' }} 
+              animate={{ y: 0 }} 
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="modal-handle" />
+              <div className="modal-title">🤝 초대 코드로 입장하기</div>
+              <form onSubmit={handleJoinTrip}>
+                <div className="input-group">
+                  <label className="input-label">방 초대 코드 (6자리)</label>
+                  <input 
+                    type="text" 
+                    className="input" 
+                    placeholder="예: A7X9BQ 또는 기존 초대 코드" 
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value)}
+                    required
+                    autoFocus
+                  />
+                  {joinError && <p className="text-xs mt-2" style={{ color: '#ef4444' }}>{joinError}</p>}
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '2rem' }}>
+                  <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowJoinModal(false)}>취소</button>
+                  <button type="submit" className="btn btn-primary" style={{ flex: 2 }} disabled={!joinCode.trim()}>입장하기</button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}

@@ -3,52 +3,135 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase.js'
 import './ChecklistPage.css'
 
-const SAMPLE_ITEMS = [
-  { id: 'c1', item: '여행자 보험 가입', is_done: false, created_by: '여행자 1' },
-  { id: 'c2', item: '충전기 및 멀티어댑터', is_done: false, created_by: '여행자 2' },
-  { id: 'c3', item: '상비약 챙기기', is_done: true, created_by: '여행자 3' },
-]
-
 const QUICK_ITEMS = ['👕 여벌 옷', '🔌 충전기', '💊 상비약', '🪥 세면도구', '📸 카메라', '☂️ 우산', '🏧 현금 환전', '🗺️ 지도 저장']
 
-export default function ChecklistPage({ user }) {
+export default function ChecklistPage({ user, tripId, membersMap, isAdmin }) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
-  const [newItem, setNewItem] = useState('')
+  
+  // Trip members for assignment (Array of IDs)
+  const [members, setMembers] = useState([])
+  
+  // Modal states
+  const [showModal, setShowModal] = useState(false)
+  const [form, setForm] = useState({ item: '', assigned_to: [user.id] })
+  const [editId, setEditId] = useState(null)
 
   useEffect(() => {
-    loadItems()
-  }, [])
+    if (tripId) {
+      loadMembers()
+      loadItems()
+    }
+  }, [tripId])
+
+  const loadMembers = async () => {
+    const { data } = await supabase.from('trip_members').select('user_id').eq('trip_id', tripId)
+    if (data) {
+      setMembers(data.map(d => d.user_id))
+    } else {
+      setMembers([user.id])
+    }
+  }
 
   const loadItems = async () => {
     setLoading(true)
-    const { data, error } = await supabase.from('checklist').select('*').order('created_at')
-    if (error || !data) {
-      setItems(SAMPLE_ITEMS)
-    } else {
+    const { data, error } = await supabase.from('checklist').select('*').eq('trip_id', tripId).order('created_at')
+    if (!error && data) {
       setItems(data)
+    } else {
+      setItems([])
     }
     setLoading(false)
   }
 
-  const addItem = async (text) => {
-    const trimmed = (text || newItem).trim()
-    if (!trimmed) return
-
-    const payload = { item: trimmed.replace(/^[^\s]*\s/, ''), is_done: false, created_by: user }
-    const { error } = await supabase.from('checklist').insert(payload)
-    if (error) {
-      setItems((prev) => [...prev, { id: Date.now().toString(), ...payload }])
-    } else {
-      await loadItems()
-    }
-    setNewItem('')
+  const openAddModal = (text = '') => {
+    setEditId(null)
+    setForm({ item: text.replace(/^[^\s]*\s/, ''), assigned_to: [user.id] })
+    setShowModal(true)
   }
 
-  const toggleDone = async (id, current) => {
-    const { error } = await supabase.from('checklist').update({ is_done: !current }).eq('id', id)
+  const openEditModal = (item) => {
+    setEditId(item.id)
+    setForm({ item: item.item, assigned_to: item.assigned_to || [] })
+    setShowModal(true)
+  }
+
+  const handleToggleAssignee = (id) => {
+    setForm(prev => {
+      if (prev.assigned_to.includes(id)) {
+        return { ...prev, assigned_to: prev.assigned_to.filter(n => n !== id) }
+      } else {
+        return { ...prev, assigned_to: [...prev.assigned_to, id] }
+      }
+    })
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!form.item.trim() || form.assigned_to.length === 0) return
+
+    if (editId) {
+      // Edit existing
+      const existingItem = items.find(i => i.id === editId)
+      // Remove completed_by for people who are no longer assigned
+      const newCompleted = (existingItem.completed_by || []).filter(id => form.assigned_to.includes(id))
+      const fullyDone = form.assigned_to.every(a => newCompleted.includes(a))
+
+      const payload = {
+        item: form.item.trim(),
+        assigned_to: form.assigned_to,
+        completed_by: newCompleted,
+        is_done: fullyDone
+      }
+      
+      const { error } = await supabase.from('checklist').update(payload).eq('id', editId)
+      if (!error) await loadItems()
+    } else {
+      // Add new
+      const payload = { 
+        item: form.item.trim(), 
+        assigned_to: form.assigned_to,
+        completed_by: [],
+        is_done: false,
+        created_by: user.name, // Legacy
+        trip_id: tripId
+      }
+      const { error } = await supabase.from('checklist').insert(payload)
+      if (!error) await loadItems()
+    }
+    
+    setShowModal(false)
+  }
+
+  const toggleDone = async (id, currentAssigned, currentCompleted) => {
+    // 1. 보안 체크: 본인이 할당되어 있지 않고 방장도 아니면 거부
+    if (!currentAssigned.includes(user.id) && !currentAssigned.includes(user.name) && !isAdmin) {
+      alert("담당자(혹은 방장)만 체크할 수 있습니다.")
+      return
+    }
+
+    // 2. 본인의 체크 상태 토글
+    // Legacy support: check both ID and Name
+    let newCompleted = [...currentCompleted]
+    const hasCheckedID = newCompleted.includes(user.id)
+    const hasCheckedName = newCompleted.includes(user.name)
+
+    if (hasCheckedID || hasCheckedName) {
+      newCompleted = newCompleted.filter(n => n !== user.id && n !== user.name)
+    } else {
+      newCompleted.push(user.id)
+    }
+
+    // 3. 교차 검증: 할당된 사람 전원이 완료했는지 확인
+    const fullyDone = currentAssigned.every(a => newCompleted.includes(a))
+
+    const { error } = await supabase.from('checklist').update({ 
+      completed_by: newCompleted,
+      is_done: fullyDone
+    }).eq('id', id)
+
     if (error) {
-      setItems((prev) => prev.map((i) => i.id === id ? { ...i, is_done: !current } : i))
+      console.error(error)
     } else {
       await loadItems()
     }
@@ -56,11 +139,7 @@ export default function ChecklistPage({ user }) {
 
   const deleteItem = async (id) => {
     const { error } = await supabase.from('checklist').delete().eq('id', id)
-    if (error) {
-      setItems((prev) => prev.filter((i) => i.id !== id))
-    } else {
-      await loadItems()
-    }
+    if (!error) await loadItems()
   }
 
   const doneCount = items.filter((i) => i.is_done).length
@@ -110,7 +189,7 @@ export default function ChecklistPage({ user }) {
               key={q}
               id={`quick-add-${q}`}
               className={`quick-item-btn${exists ? ' exists' : ''}`}
-              onClick={() => !exists && addItem(q)}
+              onClick={() => !exists && openAddModal(q)}
               disabled={exists}
             >
               {q}
@@ -119,21 +198,9 @@ export default function ChecklistPage({ user }) {
         })}
       </div>
 
-      {/* Custom add */}
-      <form
-        className="add-form"
-        onSubmit={(e) => { e.preventDefault(); addItem() }}
-      >
-        <input
-          id="checklist-input"
-          className="input"
-          value={newItem}
-          onChange={(e) => setNewItem(e.target.value)}
-          placeholder="직접 입력..."
-          style={{ flex: 1 }}
-        />
-        <button id="checklist-add-btn" type="submit" className="btn btn-primary btn-sm">추가</button>
-      </form>
+      <div style={{ textAlign: 'right', marginBottom: '1rem' }}>
+        <button className="btn btn-primary btn-sm" onClick={() => openAddModal()}>+ 직접 추가</button>
+      </div>
 
       {/* Pending items */}
       {loading ? (
@@ -159,7 +226,11 @@ export default function ChecklistPage({ user }) {
                   <CheckItem
                     key={item.id}
                     item={item}
-                    onToggle={() => toggleDone(item.id, item.is_done)}
+                    currentUser={user}
+                    membersMap={membersMap}
+                    isAdmin={isAdmin}
+                    onToggle={() => toggleDone(item.id, item.assigned_to || [], item.completed_by || [])}
+                    onEdit={() => openEditModal(item)}
                     onDelete={() => deleteItem(item.id)}
                   />
                 ))}
@@ -175,7 +246,11 @@ export default function ChecklistPage({ user }) {
                   <CheckItem
                     key={item.id}
                     item={item}
-                    onToggle={() => toggleDone(item.id, item.is_done)}
+                    currentUser={user}
+                    membersMap={membersMap}
+                    isAdmin={isAdmin}
+                    onToggle={() => toggleDone(item.id, item.assigned_to || [], item.completed_by || [])}
+                    onEdit={() => openEditModal(item)}
                     onDelete={() => deleteItem(item.id)}
                   />
                 ))}
@@ -184,11 +259,97 @@ export default function ChecklistPage({ user }) {
           )}
         </div>
       )}
+
+      {/* Add/Edit Modal */}
+      <AnimatePresence>
+        {showModal && (
+          <motion.div
+            className="modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowModal(false)}
+          >
+            <motion.div
+              className="modal-sheet"
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="modal-handle" />
+              <div className="modal-title">{editId ? '✏️ 준비물 수정' : '➕ 준비물 추가'}</div>
+
+              <form onSubmit={handleSubmit}>
+                <div className="input-group">
+                  <label className="input-label">준비물 이름 *</label>
+                  <input
+                    className="input"
+                    value={form.item}
+                    onChange={(e) => setForm({ ...form, item: e.target.value })}
+                    placeholder="예: 여권, 보조배터리"
+                    required
+                  />
+                </div>
+
+                <div className="input-group">
+                  <label className="input-label">담당자 선택 (다중 선택 가능) *</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    {members.map(memberId => {
+                      const isAssigned = form.assigned_to.includes(memberId)
+                      const memberInfo = membersMap[memberId]
+                      const displayName = memberInfo ? `${memberInfo.name}${memberInfo.is_deleted ? ' (탈퇴함)' : ''}` : memberId
+
+                      return (
+                        <button
+                          key={memberId}
+                          type="button"
+                          className="btn btn-sm"
+                          style={{
+                            background: isAssigned ? 'var(--primary-color)' : 'rgba(255,255,255,0.05)',
+                            color: isAssigned ? '#fff' : (memberInfo?.is_deleted ? '#ef4444' : 'var(--text-color)'),
+                            border: isAssigned ? '1px solid var(--primary-color)' : '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: '20px'
+                          }}
+                          onClick={() => handleToggleAssignee(memberId)}
+                        >
+                          {isAssigned ? '✓ ' : ''}{displayName}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {form.assigned_to.length === 0 && (
+                    <p className="error-text" style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '0.5rem' }}>최소 1명의 담당자를 선택해주세요.</p>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
+                  <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowModal(false)}>취소</button>
+                  <button type="submit" className="btn btn-primary" style={{ flex: 2 }} disabled={form.assigned_to.length === 0}>
+                    {editId ? '수정 완료' : '추가하기'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
 
-function CheckItem({ item, onToggle, onDelete }) {
+function CheckItem({ item, currentUser, membersMap, isAdmin, onToggle, onEdit, onDelete }) {
+  const assigned = item.assigned_to || []
+  const completed = item.completed_by || []
+  
+  // Am I assigned to this item? (check legacy name or new id)
+  const amIAssigned = assigned.includes(currentUser.id) || assigned.includes(currentUser.name)
+  // Have I checked it?
+  const didICheck = completed.includes(currentUser.id) || completed.includes(currentUser.name)
+
+  const canEdit = isAdmin || amIAssigned || item.created_by === currentUser.name || item.created_by === currentUser.id
+
   return (
     <motion.div
       className={`check-item${item.is_done ? ' done' : ''}`}
@@ -198,30 +359,53 @@ function CheckItem({ item, onToggle, onDelete }) {
       exit={{ opacity: 0, x: 12, height: 0, marginBottom: 0 }}
       transition={{ duration: 0.2 }}
     >
-      <button
-        id={`check-toggle-${item.id}`}
-        className={`check-box${item.is_done ? ' checked' : ''}`}
-        onClick={onToggle}
-      >
-        {item.is_done && (
-          <motion.span
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-          >
-            ✓
-          </motion.span>
-        )}
-      </button>
-      <div className="check-text">
-        <span className="check-item-name">{item.item}</span>
-        <span className="check-item-by">{item.created_by}</span>
+      <div style={{ display: 'flex', alignItems: 'center', flex: 1, cursor: (amIAssigned || isAdmin) ? 'pointer' : 'default' }} onClick={onToggle}>
+        <button
+          className={`check-box${didICheck || item.is_done ? ' checked' : ''}`}
+          style={{ opacity: (amIAssigned || isAdmin) ? 1 : 0.4 }}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggle(); }}
+        >
+          {(didICheck || item.is_done) && (
+            <motion.span
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+            >
+              ✓
+            </motion.span>
+          )}
+        </button>
+        
+        <div className="check-text">
+          <div className="check-item-name" style={{ textDecoration: item.is_done ? 'line-through' : 'none' }}>{item.item}</div>
+          <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginTop: '0.3rem' }}>
+            {assigned.map(a => {
+              const hasChecked = completed.includes(a)
+              const memberInfo = membersMap ? membersMap[a] : null
+              const displayName = memberInfo ? `${memberInfo.name}${memberInfo.is_deleted ? '(탈퇴)' : ''}` : a
+
+              return (
+                <span key={a} style={{ 
+                  fontSize: '0.75rem', 
+                  background: hasChecked ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255,255,255,0.1)',
+                  color: hasChecked ? '#10b981' : (memberInfo?.is_deleted ? '#ef4444' : 'var(--text-muted)'),
+                  padding: '2px 6px',
+                  borderRadius: '10px',
+                  border: hasChecked ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid transparent',
+                  textDecoration: memberInfo?.is_deleted ? 'line-through' : 'none'
+                }}>
+                  {hasChecked ? '✅ ' : ''}{displayName}
+                </span>
+              )
+            })}
+          </div>
+        </div>
       </div>
-      <button
-        id={`check-del-${item.id}`}
-        className="check-del-btn"
-        onClick={onDelete}
-      >✕</button>
+
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
+        {canEdit && <button className="check-del-btn" style={{ fontSize: '1rem' }} onClick={onEdit}>✏️</button>}
+        {canEdit && <button className="check-del-btn" style={{ fontSize: '1.2rem' }} onClick={onDelete}>✕</button>}
+      </div>
     </motion.div>
   )
 }

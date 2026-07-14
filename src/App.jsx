@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react'
+import { Routes, Route, Navigate, useNavigate, useLocation, useParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { supabase } from './lib/supabase.js'
 import LoginPage from './pages/LoginPage.jsx'
+import LobbyPage from './pages/LobbyPage.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
 import PlanPage from './pages/PlanPage.jsx'
 import ExpensePage from './pages/ExpensePage.jsx'
 import ChecklistPage from './pages/ChecklistPage.jsx'
 import AccommodationPage from './pages/AccommodationPage.jsx'
+import MyPage from './pages/MyPage.jsx'
 import './App.css'
 
 const TABS = [
@@ -17,21 +21,108 @@ const TABS = [
 ]
 
 export default function App() {
-  const [user, setUser] = useState(() => localStorage.getItem('travelplan_user') || '')
-  const [activeTab, setActiveTab] = useState('dashboard')
+  const navigate = useNavigate()
+  
+  const [user, setUser] = useState(() => {
+    // Read new JSON session
+    const sessionStr = localStorage.getItem('travelplan_session')
+    if (sessionStr) {
+      try {
+        const session = JSON.parse(sessionStr)
+        if (session.id && session.name) return session
+      } catch (e) {
+        return null
+      }
+    }
+    return null
+  })
 
-  const handleLogin = (name) => {
-    setUser(name)
+  const handleLogin = (sessionObj) => {
+    setUser(sessionObj)
+    navigate('/lobby', { replace: true })
   }
 
   const handleLogout = () => {
+    localStorage.removeItem('travelplan_session')
     localStorage.removeItem('travelplan_user')
-    setUser('')
+    setUser(null)
+    navigate('/lobby', { replace: true })
   }
 
   if (!user) {
     return <LoginPage onLogin={handleLogin} />
   }
+
+  return (
+    <Routes>
+      <Route path="/" element={<Navigate to="/lobby" replace />} />
+      <Route path="/lobby" element={<LobbyPage user={user} onLogout={handleLogout} />} />
+      <Route path="/mypage" element={<MyPage user={user} onLogout={handleLogout} />} />
+      <Route path="/trip/:tripId/*" element={<TripLayout user={user} onLogout={handleLogout} />} />
+      <Route path="*" element={<Navigate to="/lobby" replace />} />
+    </Routes>
+  )
+}
+
+function TripLayout({ user, onLogout }) {
+  const { tripId } = useParams()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const activeTab = location.pathname.split('/').pop() || 'dashboard'
+
+  // Context for child pages
+  const [membersMap, setMembersMap] = useState({}) // { [id]: { name, is_deleted } }
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [tripData, setTripData] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchTripContext = async () => {
+      setLoading(true)
+      
+      // 1. Fetch trip and admin
+      const { data: trip } = await supabase
+        .from('trips')
+        .select('*')
+        .eq('id', tripId)
+        .single()
+        
+      if (trip) {
+        setTripData(trip)
+        setIsAdmin(trip.admin_id === user.id)
+      }
+
+      // 2. Fetch all members joined with users
+      // FK 제약 조건이 설정되지 않았을 수 있으므로 조인 대신 두 번의 쿼리로 나누어 안전하게 가져옵니다.
+      const { data: members, error } = await supabase
+        .from('trip_members')
+        .select('user_id')
+        .eq('trip_id', tripId)
+
+      if (!error && members && members.length > 0) {
+        const userIds = members.map(m => m.user_id).filter(Boolean)
+        
+        const { data: usersData } = await supabase
+          .from('users')
+          .select('id, name, is_deleted')
+          .in('id', userIds)
+
+        if (usersData) {
+          const map = {}
+          usersData.forEach(u => {
+            map[u.id] = {
+              name: u.name,
+              is_deleted: u.is_deleted
+            }
+          })
+          setMembersMap(map)
+        }
+      }
+      setLoading(false)
+    }
+    
+    fetchTripContext()
+  }, [tripId, user.id])
 
   const pageVariants = {
     initial: { opacity: 0, y: 10 },
@@ -39,26 +130,44 @@ export default function App() {
     exit: { opacity: 0, y: -10 },
   }
 
+  if (loading) {
+    return <div className="app-shell" style={{justifyContent:'center', alignItems:'center'}}>로딩 중...</div>
+  }
+
   return (
     <div className="app-shell">
       {/* Top bar */}
       <header className="top-bar">
-        <div className="top-bar-logo">✈️ <span>여행플랜</span></div>
-        <div className="top-bar-right">
-          <span className="top-bar-user">👤 {user}</span>
-          <button
-            id="logout-btn"
-            className="logout-btn"
-            onClick={handleLogout}
-            title="로그아웃"
-          >
+        <div className="top-bar-logo" onClick={() => navigate('/lobby')} style={{ cursor: 'pointer' }}>
+          ✈️ <span>여행플랜</span>
+        </div>
+        <div className="top-bar-right" style={{ gap: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '2px', marginRight: '4px' }}>
+            <span className="top-bar-user" style={{ fontSize: '0.75rem', opacity: 0.7 }}>
+              {tripId.slice(0,6)}..{isAdmin ? '👑' : ''}
+            </span>
+            <button 
+              className="btn btn-secondary btn-sm" 
+              style={{ padding: '0.15rem 0.3rem', fontSize: '0.65rem', background: 'rgba(99,102,241,0.15)', border: 'none', color: 'var(--accent-primary)' }}
+              onClick={() => {
+                navigator.clipboard.writeText(tripId);
+                alert('초대 코드(' + tripId + ')가 복사되었습니다!\n카카오톡 친구에게 붙여넣기해서 초대하세요.');
+              }}
+            >
+              복사
+            </button>
+          </div>
+          <button className="top-bar-user mypage-btn" onClick={() => navigate('/mypage')} style={{ padding: '0.2rem 0.4rem', fontSize: '0.75rem' }}>
+            👤{user.name.slice(0,3)}
+          </button>
+          <button id="logout-btn" className="logout-btn" onClick={onLogout} title="로그아웃" style={{ padding: '0.2rem 0.4rem', fontSize: '0.7rem' }}>
             나가기
           </button>
         </div>
       </header>
 
       {/* Page content */}
-      <main style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+      <main style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -67,13 +176,16 @@ export default function App() {
             animate="animate"
             exit="exit"
             transition={{ duration: 0.2 }}
-            style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
+            style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
           >
-            {activeTab === 'dashboard' && <DashboardPage user={user} />}
-            {activeTab === 'plan' && <PlanPage user={user} />}
-            {activeTab === 'accommodation' && <AccommodationPage user={user} />}
-            {activeTab === 'expense' && <ExpensePage user={user} />}
-            {activeTab === 'checklist' && <ChecklistPage user={user} />}
+            <Routes>
+              <Route path="dashboard" element={<DashboardPage user={user} tripId={tripId} membersMap={membersMap} />} />
+              <Route path="plan" element={<PlanPage user={user} tripId={tripId} membersMap={membersMap} isAdmin={isAdmin} />} />
+              <Route path="accommodation" element={<AccommodationPage user={user} tripId={tripId} membersMap={membersMap} isAdmin={isAdmin} />} />
+              <Route path="expense" element={<ExpensePage user={user} tripId={tripId} membersMap={membersMap} isAdmin={isAdmin} />} />
+              <Route path="checklist" element={<ChecklistPage user={user} tripId={tripId} membersMap={membersMap} isAdmin={isAdmin} />} />
+              <Route path="*" element={<Navigate to="dashboard" replace />} />
+            </Routes>
           </motion.div>
         </AnimatePresence>
       </main>
@@ -88,7 +200,7 @@ export default function App() {
               key={tab.id}
               id={`nav-${tab.id}`}
               className={`nav-item${isActive ? ' active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => navigate(`/trip/${tripId}/${tab.id}`)}
             >
               <Icon active={isActive} />
               <span className="nav-label">{tab.label}</span>
