@@ -17,13 +17,12 @@ const SAMPLE_EXPENSES = [
   { id: 'e2', created_by: '여행자 2', label: '렌터카', amount: 60000, category: 'transport' },
 ]
 
-const MEMBER_COUNT = 3
-
 export default function ExpensePage({ user }) {
   const [expenses, setExpenses] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({ label: '', amount: '', category: 'etc' })
+  const [memberCount, setMemberCount] = useState(3)
 
   useEffect(() => {
     loadExpenses()
@@ -69,7 +68,8 @@ export default function ExpensePage({ user }) {
   }
 
   const total = expenses.reduce((sum, e) => sum + Number(e.amount), 0)
-  const perPerson = Math.ceil(total / MEMBER_COUNT)
+  const count = Number(memberCount) || 1
+  const perPerson = Math.ceil(total / count)
 
   // Category totals
   const categoryTotals = CATEGORIES.map((cat) => ({
@@ -97,7 +97,21 @@ export default function ExpensePage({ user }) {
           </div>
           <div className="summary-divider" />
           <div className="summary-item">
-            <span className="summary-label">3인 1인당</span>
+            <span className="summary-label">총 인원</span>
+            <div className="member-count-input-wrap">
+              <input 
+                type="number" 
+                min="1" 
+                value={memberCount} 
+                onChange={(e) => setMemberCount(e.target.value ? Number(e.target.value) : '')}
+                className="member-count-input"
+              />
+              <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>명</span>
+            </div>
+          </div>
+          <div className="summary-divider" />
+          <div className="summary-item">
+            <span className="summary-label">1인당</span>
             <span className="summary-value amber-text">{perPerson.toLocaleString()}원</span>
           </div>
         </div>

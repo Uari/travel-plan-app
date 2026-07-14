@@ -204,3 +204,30 @@
   cursor: pointer;
   transition: all var(--transition);
 }
+
+.member-count-input-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.member-count-input {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--accent-primary);
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  font-weight: 800;
+  width: 2.5rem;
+  text-align: center;
+  padding: 0;
+  outline: none;
+  font-family: inherit;
+}
+
+.member-count-input::-webkit-inner-spin-button,
+.member-count-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
