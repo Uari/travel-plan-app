@@ -51,7 +51,7 @@
   --map-compass-bg: rgba(8,18,38,0.9);
   --map-compass-text: rgba(129,140,248,0.85);
   --map-border: rgba(99, 102, 241, 0.2);
-  --map-shadow: 0 0 0 1px rgba(99, 102, 241, 0.1), 0 8px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --map-shadow: 0 0 0 1px rgba(99, 102, 241, 0.1), 0 8px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.04), inset 0 0 80px var(--map-vig);
 
   --radius-sm: 8px;
   --radius-md: 14px;
@@ -111,7 +111,7 @@
   --map-compass-bg: rgba(255,255,255,0.8);
   --map-compass-text: rgba(99,102,241,0.85);
   --map-border: rgba(99, 102, 241, 0.15);
-  --map-shadow: 0 0 0 1px rgba(99, 102, 241, 0.05), 0 8px 30px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  --map-shadow: 0 0 0 1px rgba(99, 102, 241, 0.05), 0 8px 30px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 0 80px transparent;
 }
 
 /* Reset */

@@ -85,10 +85,7 @@ export default function KoreaMapSVG({ result, dartState }) {
         aria-label="대한민국 행정구역 지도"
       >
         <defs>
-          <radialGradient id="seaBg3" cx="50%" cy="45%" r="65%">
-            <stop offset="0%" stopColor="var(--map-sea-start)" />
-            <stop offset="100%" stopColor="var(--map-sea-end)" />
-          </radialGradient>
+
 
           <linearGradient id="landFill3" x1="20%" y1="0%" x2="80%" y2="100%">
             <stop offset="0%" stopColor="var(--map-land-start)" />
@@ -125,15 +122,11 @@ export default function KoreaMapSVG({ result, dartState }) {
             <circle cx="1" cy="1" r="0.7" fill="var(--map-dots)" />
           </pattern>
 
-          <radialGradient id="vig3" cx="50%" cy="50%" r="70%">
-            <stop offset="55%" stopColor="transparent" />
-            <stop offset="100%" stopColor="var(--map-vig)" />
-          </radialGradient>
+
         </defs>
 
-        {/* 배경 */}
-        <rect width={W} height={H + 80} fill="url(#seaBg3)" />
-        <rect width={W} height={H + 80} fill="url(#seaDots3)" />
+        {/* 배경 (가득 채우기) */}
+        <rect x="-1000" y="-1000" width="3000" height="3000" fill="url(#seaDots3)" />
 
         {/* 격자선 */}
         {[80, 160, 240, 320, 400].map((y, i) => (
@@ -208,8 +201,7 @@ export default function KoreaMapSVG({ result, dartState }) {
           </g>
         )}
 
-        {/* 비네팅 */}
-        <rect width={W} height={H + 80} fill="url(#vig3)" style={{ pointerEvents: 'none' }} />
+
 
         {/* 다트 핀 */}
         {isLanded && activeProv && (
