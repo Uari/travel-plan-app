@@ -98,15 +98,25 @@ export default function ExpensePage({ user }) {
           <div className="summary-divider" />
           <div className="summary-item">
             <span className="summary-label">총 인원</span>
-            <div className="member-count-input-wrap">
-              <input 
-                type="number" 
-                min="1" 
-                value={memberCount} 
-                onChange={(e) => setMemberCount(e.target.value ? Number(e.target.value) : '')}
-                className="member-count-input"
-              />
-              <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>명</span>
+            <div className="member-count-stepper">
+              <button 
+                type="button" 
+                className="stepper-btn" 
+                onClick={() => setMemberCount(prev => Math.max(1, (Number(prev) || 1) - 1))}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              </button>
+              <div className="stepper-value-wrap">
+                <span className="stepper-value">{memberCount}</span>
+                <span className="stepper-unit">명</span>
+              </div>
+              <button 
+                type="button" 
+                className="stepper-btn" 
+                onClick={() => setMemberCount(prev => (Number(prev) || 1) + 1)}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
             </div>
           </div>
           <div className="summary-divider" />
