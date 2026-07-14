@@ -169,24 +169,34 @@ function TripLayout({ user, onLogout }) {
       {/* Page content */}
       <main style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            variants={pageVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            transition={{ duration: 0.2 }}
-            style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
-          >
-            <Routes>
-              <Route path="dashboard" element={<DashboardPage user={user} tripId={tripId} membersMap={membersMap} />} />
-              <Route path="plan" element={<PlanPage user={user} tripId={tripId} membersMap={membersMap} isAdmin={isAdmin} />} />
-              <Route path="accommodation" element={<AccommodationPage user={user} tripId={tripId} membersMap={membersMap} isAdmin={isAdmin} />} />
-              <Route path="expense" element={<ExpensePage user={user} tripId={tripId} membersMap={membersMap} isAdmin={isAdmin} />} />
-              <Route path="checklist" element={<ChecklistPage user={user} tripId={tripId} membersMap={membersMap} isAdmin={isAdmin} />} />
-              <Route path="*" element={<Navigate to="dashboard" replace />} />
-            </Routes>
-          </motion.div>
+          <Routes location={location} key={location.pathname}>
+            <Route path="dashboard" element={
+              <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2 }} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                <DashboardPage user={user} tripId={tripId} membersMap={membersMap} />
+              </motion.div>
+            } />
+            <Route path="plan" element={
+              <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2 }} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                <PlanPage user={user} tripId={tripId} membersMap={membersMap} isAdmin={isAdmin} />
+              </motion.div>
+            } />
+            <Route path="accommodation" element={
+              <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2 }} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                <AccommodationPage user={user} tripId={tripId} membersMap={membersMap} isAdmin={isAdmin} />
+              </motion.div>
+            } />
+            <Route path="expense" element={
+              <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2 }} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                <ExpensePage user={user} tripId={tripId} membersMap={membersMap} isAdmin={isAdmin} />
+              </motion.div>
+            } />
+            <Route path="checklist" element={
+              <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2 }} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                <ChecklistPage user={user} tripId={tripId} membersMap={membersMap} isAdmin={isAdmin} />
+              </motion.div>
+            } />
+            <Route path="*" element={<Navigate to="dashboard" replace />} />
+          </Routes>
         </AnimatePresence>
       </main>
 
