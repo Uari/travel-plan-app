@@ -1,15 +1,18 @@
 import { useState, useEffect, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import { getCountry } from '../data/countries.js'
 import WorldMapSVG from '../components/WorldMapSVG.jsx'
+import KoreaLogMap from '../components/KoreaLogMap.jsx'
 import BottomSheetModal from '../components/BottomSheetModal.jsx'
 import './TravelLogPage.css'
 
 export default function TravelLogPage({ user }) {
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
-  const [pickList, setPickList] = useState(null) // 같은 국가에 여행 여러 개일 때 선택 목록
+  const [pickList, setPickList] = useState(null) // 같은 국가/도에 여행 여러 개일 때 선택 목록
+  const [view, setView] = useState('world') // 'world' | 'korea'
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -58,13 +61,39 @@ export default function TravelLogPage({ user }) {
     return counts
   }, [logs])
 
+  // 대한민국 도(道)별 완료 여행 수 (상세지도 다트용)
+  const krVisited = useMemo(() => {
+    const counts = {}
+    logs.forEach((t) => {
+      if (t.country_code === 'KR' && t.region_province) {
+        counts[t.region_province] = (counts[t.region_province] || 0) + 1
+      }
+    })
+    return counts
+  }, [logs])
+
   const openCountry = (code) => {
+    // 대한민국은 상세지도(레벨 2)로 줌인
+    if (code === 'KR') {
+      setView('korea')
+      return
+    }
     const inCountry = logs.filter((t) => (t.country_code || 'ETC') === code)
     if (inCountry.length === 0) return
     if (inCountry.length === 1) {
       navigate(`/travel-log/${inCountry[0].id}`)
     } else {
-      setPickList({ code, trips: inCountry })
+      setPickList({ label: `${getCountry(code)?.emoji || '🌍'} ${getCountry(code)?.name || '해외'} 여행`, trips: inCountry })
+    }
+  }
+
+  const openProvince = (prov) => {
+    const inProv = logs.filter((t) => t.country_code === 'KR' && t.region_province === prov)
+    if (inProv.length === 0) return
+    if (inProv.length === 1) {
+      navigate(`/travel-log/${inProv[0].id}`)
+    } else {
+      setPickList({ label: `🇰🇷 ${prov} 여행`, trips: inProv })
     }
   }
 
@@ -89,19 +118,40 @@ export default function TravelLogPage({ user }) {
             <p>여행을 마치면 여기에 기록돼요!</p>
           </div>
         ) : (
-          /* 세계지도 (레벨 1) */
           <div className="travellog-map-wrap">
-            <WorldMapSVG visited={visited} onSelectCountry={openCountry} />
-            <p className="travellog-map-hint">지도의 다트를 눌러 여행 기록을 확인하세요 🎯</p>
+            <AnimatePresence mode="wait">
+              {view === 'world' ? (
+                <motion.div
+                  key="world"
+                  initial={{ opacity: 0, scale: 1.15 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.15 }}
+                  transition={{ duration: 0.35, ease: 'easeInOut' }}
+                >
+                  <WorldMapSVG visited={visited} onSelectCountry={openCountry} />
+                  <p className="travellog-map-hint">지도의 다트를 눌러 여행 기록을 확인하세요 🎯</p>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="korea"
+                  initial={{ opacity: 0, scale: 0.85 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.85 }}
+                  transition={{ duration: 0.35, ease: 'easeInOut' }}
+                >
+                  <button className="travellog-map-back" onClick={() => setView('world')}>← 세계지도로</button>
+                  <KoreaLogMap visited={krVisited} onSelectProvince={openProvince} />
+                  <p className="travellog-map-hint">도(道)의 다트를 눌러 여행 기록을 확인하세요 🎯</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
       </main>
 
-      {/* 같은 국가에 여행이 여러 개일 때 방 선택 */}
+      {/* 같은 국가/도에 여행이 여러 개일 때 방 선택 */}
       <BottomSheetModal open={!!pickList} onClose={() => setPickList(null)}>
-        <div className="modal-title">
-          {pickList ? `${getCountry(pickList.code)?.emoji || '🌍'} ${getCountry(pickList.code)?.name || '해외'} 여행` : ''}
-        </div>
+        <div className="modal-title">{pickList?.label || ''}</div>
         <p className="text-sm text-muted" style={{ marginBottom: '0.75rem' }}>어떤 여행을 볼까요?</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {pickList?.trips.map((t) => (
