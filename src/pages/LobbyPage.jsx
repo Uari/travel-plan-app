@@ -36,7 +36,8 @@ export default function LobbyPage({ user, onLogout }) {
           id,
           name,
           start_date,
-          member_count
+          member_count,
+          is_completed
         )
       `)
       .eq('user_id', user.id)
@@ -155,6 +156,19 @@ export default function LobbyPage({ user, onLogout }) {
     const newCount = Math.max(1, currentCount - 1)
     await supabase.from('trips').update({ member_count: newCount }).eq('id', tripId)
 
+    // 방장 공백 방지: 나간 뒤 방장(is_admin)이 아무도 없으면 남은 멤버 전원을 방장으로 승격
+    const { data: remaining } = await supabase
+      .from('trip_members')
+      .select('user_id, is_admin')
+      .eq('trip_id', tripId)
+
+    if (remaining && remaining.length > 0 && !remaining.some((m) => m.is_admin)) {
+      await supabase
+        .from('trip_members')
+        .update({ is_admin: true })
+        .eq('trip_id', tripId)
+    }
+
     // Refresh list
     fetchMyTrips()
   }
@@ -233,7 +247,21 @@ export default function LobbyPage({ user, onLogout }) {
                   >
                     나가기
                   </button>
-                  <h3>{trip.name}</h3>
+                  <h3>
+                    {trip.name}
+                    {trip.is_completed && (
+                      <span
+                        style={{
+                          marginLeft: '0.5rem', fontSize: '0.65rem', fontWeight: 700,
+                          color: '#10b981', background: 'rgba(16,185,129,0.12)',
+                          border: '1px solid rgba(16,185,129,0.4)', borderRadius: '999px',
+                          padding: '0.1rem 0.45rem', verticalAlign: 'middle', whiteSpace: 'nowrap'
+                        }}
+                      >
+                        ✅ 완료
+                      </span>
+                    )}
+                  </h3>
                   <div className="trip-card-meta">
                     <span className="trip-code">코드: {trip.id}</span>
                     {trip.start_date && <span className="trip-date">📅 {trip.start_date}</span>}

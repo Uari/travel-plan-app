@@ -111,19 +111,23 @@ function TripLayout({ user, onLogout }) {
 
       if (trip) {
         setTripData(trip)
-        setIsAdmin(trip.admin_id === user.id)
       }
 
       // 2. Fetch all members joined with users
       // FK 제약 조건이 설정되지 않았을 수 있으므로 조인 대신 두 번의 쿼리로 나누어 안전하게 가져옵니다.
       const { data: members, error } = await supabase
         .from('trip_members')
-        .select('user_id')
+        .select('user_id, is_admin')
         .eq('trip_id', tripId)
 
       if (error) {
         console.error(error)
       }
+
+      // 방장 판정: trip_members.is_admin(다중 방장)을 우선하되,
+      // 아직 백필이 안 된 기존 데이터를 위해 방 생성자(admin_id)도 방장으로 인정한다.
+      const myMembership = members?.find(m => m.user_id === user.id)
+      setIsAdmin(myMembership?.is_admin === true || trip?.admin_id === user.id)
 
       if (!error && members && members.length > 0) {
         const userIds = members.map(m => m.user_id).filter(Boolean)
