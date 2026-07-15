@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import { getCountry } from '../data/countries.js'
@@ -23,11 +24,37 @@ export default function TravelLogDetailPage({ user }) {
   const [isAdmin, setIsAdmin] = useState(false)
   const [photos, setPhotos] = useState([])
   const [uploading, setUploading] = useState(false)
+  const [viewerIndex, setViewerIndex] = useState(null) // 라이트박스로 크게 볼 사진 index
+  const touchStartX = useRef(null)
 
   useEffect(() => {
     loadAll()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tripId])
+
+  // 라이트박스: 키보드 좌우/ESC
+  useEffect(() => {
+    if (viewerIndex === null) return
+    const onKey = (e) => {
+      if (e.key === 'Escape') setViewerIndex(null)
+      else if (e.key === 'ArrowLeft') setViewerIndex((i) => (i - 1 + photos.length) % photos.length)
+      else if (e.key === 'ArrowRight') setViewerIndex((i) => (i + 1) % photos.length)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [viewerIndex, photos.length])
+
+  const showPrev = () => setViewerIndex((i) => (i - 1 + photos.length) % photos.length)
+  const showNext = () => setViewerIndex((i) => (i + 1) % photos.length)
+
+  const onTouchStart = (e) => { touchStartX.current = e.touches[0].clientX }
+  const onTouchEnd = (e) => {
+    if (touchStartX.current === null) return
+    const dx = e.changedTouches[0].clientX - touchStartX.current
+    if (dx > 50) showPrev()
+    else if (dx < -50) showNext()
+    touchStartX.current = null
+  }
 
   const loadAll = async () => {
     setLoading(true)
@@ -296,12 +323,16 @@ export default function TravelLogDetailPage({ user }) {
             </label>
           ) : (
             <div className="tld-photo-grid">
-              {photos.map((photo) => (
-                <div key={photo.id} className="tld-photo">
+              {photos.map((photo, i) => (
+                <div key={photo.id} className="tld-photo" onClick={() => setViewerIndex(i)}>
                   <img src={photo.url} alt="여행 사진" loading="lazy" />
                   <div className="tld-photo-by">{getDisplayName(membersMap, photo.uploaded_by, { fallback: '' })}</div>
                   {(photo.uploaded_by === user.id || isAdmin) && (
-                    <button className="tld-photo-del" onClick={() => handleDeletePhoto(photo)} title="삭제">✕</button>
+                    <button
+                      className="tld-photo-del"
+                      onClick={(e) => { e.stopPropagation(); handleDeletePhoto(photo) }}
+                      title="삭제"
+                    >✕</button>
                   )}
                 </div>
               ))}
@@ -309,6 +340,55 @@ export default function TravelLogDetailPage({ user }) {
           )}
         </section>
       </main>
+
+      {/* 사진 크게 보기 (라이트박스) */}
+      <AnimatePresence>
+        {viewerIndex !== null && photos[viewerIndex] && (
+          <motion.div
+            className="tld-viewer"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setViewerIndex(null)}
+          >
+            <button className="tld-viewer-close" onClick={() => setViewerIndex(null)} aria-label="닫기">✕</button>
+            <span className="tld-viewer-count">{viewerIndex + 1} / {photos.length}</span>
+
+            {photos.length > 1 && (
+              <button
+                className="tld-viewer-nav prev"
+                onClick={(e) => { e.stopPropagation(); showPrev() }}
+                aria-label="이전"
+              >‹</button>
+            )}
+
+            <motion.img
+              key={photos[viewerIndex].id}
+              className="tld-viewer-img"
+              src={photos[viewerIndex].url}
+              alt="여행 사진"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.18 }}
+              onClick={(e) => e.stopPropagation()}
+              onTouchStart={onTouchStart}
+              onTouchEnd={onTouchEnd}
+            />
+
+            {photos.length > 1 && (
+              <button
+                className="tld-viewer-nav next"
+                onClick={(e) => { e.stopPropagation(); showNext() }}
+                aria-label="다음"
+              >›</button>
+            )}
+
+            <div className="tld-viewer-by">
+              {getDisplayName(membersMap, photos[viewerIndex].uploaded_by, { fallback: '' })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
