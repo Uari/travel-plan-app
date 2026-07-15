@@ -27,6 +27,13 @@
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-active: rgba(99, 102, 241, 0.5);
 
+  /* 레거시 변수 별칭 (구 코드 호환 - 실제 값은 테마 변수를 따라감) */
+  --card-bg: var(--bg-card);
+  --primary-color: var(--accent-primary);
+  --secondary-color: var(--accent-secondary);
+  --text-color: var(--text-primary);
+  --bg-color: var(--bg-base);
+
   --gradient-main: linear-gradient(135deg, #6366f1, #8b5cf6, #14b8a6);
   --gradient-card: linear-gradient(145deg, #1e2d45, #111827);
   --gradient-amber: linear-gradient(135deg, #f59e0b, #ef4444);
@@ -67,51 +74,52 @@
 }
 
 [data-theme="light"] {
-  --bg-base: #f8fafc;
+  /* 흰색 배경 + 파랑 + 네이버 초록 (밝고 깔끔한 무드) */
+  --bg-base: #f4f7fb;
   --bg-surface: #ffffff;
-  --bg-elevated: #f1f5f9;
+  --bg-elevated: #eef3f9;
   --bg-card: #ffffff;
-  --bg-glass: rgba(0, 0, 0, 0.03);
+  --bg-glass: rgba(20, 40, 80, 0.035);
 
-  --accent-primary: #4f46e5;
-  --accent-secondary: #7c3aed;
-  --accent-teal: #0d9488;
-  --accent-amber: #d97706;
-  --accent-rose: #e11d48;
-  --accent-emerald: #059669;
+  --accent-primary: #03c75a;   /* 네이버 초록 */
+  --accent-secondary: #2f6bff; /* 파랑 */
+  --accent-teal: #03c75a;
+  --accent-amber: #f5a623;
+  --accent-rose: #ef4d5a;
+  --accent-emerald: #03c75a;
 
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
+  --text-primary: #17181c;
+  --text-secondary: #4b5563;
+  --text-muted: #8b95a3;
 
-  --border-subtle: rgba(0, 0, 0, 0.08);
-  --border-active: rgba(79, 70, 229, 0.5);
+  --border-subtle: rgba(20, 40, 80, 0.09);
+  --border-active: rgba(3, 199, 90, 0.5);
 
-  --gradient-main: linear-gradient(135deg, #4f46e5, #7c3aed, #0d9488);
-  --gradient-card: linear-gradient(145deg, #ffffff, #f8fafc);
-  --gradient-amber: linear-gradient(135deg, #f59e0b, #ef4444);
-  --gradient-teal: linear-gradient(135deg, #0d9488, #4f46e5);
+  --gradient-main: linear-gradient(135deg, #03c75a, #2f6bff);
+  --gradient-card: linear-gradient(145deg, #ffffff, #f4f7fb);
+  --gradient-amber: linear-gradient(135deg, #f5a623, #ef4d5a);
+  --gradient-teal: linear-gradient(135deg, #03c75a, #2f6bff);
 
-  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.06);
-  --shadow-glow: 0 0 24px rgba(79, 70, 229, 0.15);
+  --shadow-card: 0 4px 16px rgba(20, 40, 80, 0.07);
+  --shadow-glow: 0 0 24px rgba(3, 199, 90, 0.18);
 
   --bg-nav: rgba(255, 255, 255, 0.95);
-  --bg-topbar: rgba(255, 255, 255, 0.92);
-  --bg-map: #e2e8f0;
-  --gradient-map: radial-gradient(ellipse at 50% 40%, #f1f5f9 0%, #e2e8f0 70%);
+  --bg-topbar: rgba(255, 255, 255, 0.95);
+  --bg-map: #e6eef7;
+  --gradient-map: radial-gradient(ellipse at 50% 40%, #f1f6fc 0%, #e6eef7 70%);
 
-  --map-sea-start: #f1f5f9;
-  --map-sea-end: #e2e8f0;
+  --map-sea-start: #eef4fb;
+  --map-sea-end: #e0e9f4;
   --map-land-start: #ffffff;
-  --map-land-end: #f8fafc;
-  --map-dots: rgba(99,102,241,0.08);
-  --map-vig: rgba(148,163,184,0.3);
-  --map-text-sea: rgba(99,102,241,0.4);
-  --map-compass-stroke: rgba(99,102,241,0.3);
-  --map-compass-bg: rgba(255,255,255,0.8);
-  --map-compass-text: rgba(99,102,241,0.85);
-  --map-border: rgba(99, 102, 241, 0.15);
-  --map-shadow: 0 0 0 1px rgba(99, 102, 241, 0.05), 0 8px 30px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 0 80px transparent;
+  --map-land-end: #f4f7fb;
+  --map-dots: rgba(47,107,255,0.07);
+  --map-vig: rgba(120,140,170,0.25);
+  --map-text-sea: rgba(47,107,255,0.4);
+  --map-compass-stroke: rgba(47,107,255,0.3);
+  --map-compass-bg: rgba(255,255,255,0.85);
+  --map-compass-text: rgba(47,107,255,0.85);
+  --map-border: rgba(47,107,255,0.15);
+  --map-shadow: 0 0 0 1px rgba(47,107,255,0.05), 0 8px 30px rgba(20,40,80,0.1), inset 0 1px 0 rgba(255,255,255,0.6), inset 0 0 80px transparent;
 }
 
 /* Reset */

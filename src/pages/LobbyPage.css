@@ -12,10 +12,18 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 1.5rem;
-  background: rgba(15, 23, 42, 0.8);
+  background: var(--bg-topbar);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border-subtle);
   z-index: 10;
+}
+
+.lobby-logo span {
+  background: var(--gradient-main);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
 }
 
 .lobby-logo {
@@ -35,7 +43,7 @@
 .lobby-user {
   font-size: 0.9rem;
   font-weight: 500;
-  color: var(--text-color);
+  color: var(--text-primary);
 }
 
 .lobby-main {
@@ -81,19 +89,20 @@
 }
 
 .trip-card {
-  background: var(--card-bg);
-  border: 1px solid rgba(255,255,255,0.05);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
   border-radius: 16px;
   padding: 1.5rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: var(--shadow-card);
 }
 
 .trip-card h3 {
   font-size: 1.1rem;
   margin-bottom: 0.75rem;
-  font-weight: 600;
-  color: var(--primary-color);
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .trip-card-meta {
@@ -105,7 +114,7 @@
 }
 
 .trip-code {
-  background: rgba(255,255,255,0.1);
+  background: var(--bg-glass);
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
   font-family: monospace;
@@ -115,7 +124,8 @@
   text-align: center;
   padding: 3rem 1rem;
   color: var(--text-muted);
-  background: var(--card-bg);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
   border-radius: 16px;
   line-height: 1.6;
 }
@@ -134,7 +144,7 @@
   text-align: left;
   color: #fff;
   background: linear-gradient(135deg, var(--accent-primary, #6366f1), var(--accent-secondary, #8b5cf6));
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.28);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
 }
 
 .travellog-hero-icon {

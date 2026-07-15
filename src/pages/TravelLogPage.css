@@ -63,13 +63,13 @@
   stroke-width: 0.5;
 }
 
-/* 라이트 모드: 육지를 밝게, 바다를 옅게 */
+/* 라이트 모드: 흰 육지 + 옅은 파랑 바다 */
 [data-theme="light"] .travellog-map-wrap {
-  --wm-ocean: #dbeafe;
+  --wm-ocean: #dbe8f7;
 }
 [data-theme="light"] .world-map-svg .wm-country {
   --wm-land: #ffffff;
-  --wm-stroke: rgba(71, 85, 105, 0.55);
+  --wm-stroke: rgba(47, 107, 255, 0.35);
 }
 
 .world-map-svg .wm-dart {
