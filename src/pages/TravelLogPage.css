@@ -41,6 +41,14 @@
   margin: 0 auto;
 }
 
+/* PC 화면에서는 지도를 넓게 꽉 차게 */
+@media (min-width: 768px) {
+  .travellog-main {
+    max-width: 1280px;
+    padding: 1.5rem 2rem;
+  }
+}
+
 .travellog-map-wrap {
   /* 세계지도 전용 바다(배경)색 — 육지와 대비가 크도록 지정 */
   background: var(--wm-ocean, #0d1526);
