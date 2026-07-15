@@ -1,8 +1,7 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase.js'
-import { hashPassword } from '../lib/hash.js'
+import { changePassword, deleteAccount } from '../lib/authApi.js'
 import './MyPage.css'
 
 export default function MyPage({ user, onLogout, theme, toggleTheme }) {
@@ -39,41 +38,18 @@ export default function MyPage({ user, onLogout, theme, toggleTheme }) {
     }
 
     setLoading(true)
-    try {
-      const hashedCurrent = await hashPassword(currentPw)
-      
-      // Verify current password
-      const { data: userData, error: fetchError } = await supabase
-        .from('users')
-        .select('password')
-        .eq('id', user.id)
-        .single()
+    const { error } = await changePassword(user.id, currentPw, newPw)
 
-      if (fetchError || !userData) throw new Error('사용자 조회 실패')
-      
-      if (userData.password !== hashedCurrent) {
-        showMessage('현재 비밀번호가 틀렸습니다.', true)
-        setLoading(false)
-        return
-      }
-
-      // Update password
-      const hashedNew = await hashPassword(newPw)
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ password: hashedNew })
-        .eq('id', user.id)
-
-      if (updateError) throw updateError
-
-      showMessage('비밀번호가 성공적으로 변경되었습니다.')
-      setCurrentPw('')
-      setNewPw('')
-      setNewPwConfirm('')
-    } catch (err) {
-      console.error(err)
-      showMessage('비밀번호 변경 중 오류가 발생했습니다.', true)
+    if (error) {
+      showMessage(error.message || '비밀번호 변경 중 오류가 발생했습니다.', true)
+      setLoading(false)
+      return
     }
+
+    showMessage('비밀번호가 성공적으로 변경되었습니다.')
+    setCurrentPw('')
+    setNewPw('')
+    setNewPwConfirm('')
     setLoading(false)
   }
 
@@ -87,39 +63,16 @@ export default function MyPage({ user, onLogout, theme, toggleTheme }) {
     if (!window.confirm('정말 탈퇴하시겠습니까? (이전 여행 데이터는 남지만 복구 불가능합니다)')) return
 
     setLoading(true)
-    try {
-      const hashedPw = await hashPassword(deletePw)
-      
-      // Verify password
-      const { data: userData, error: fetchError } = await supabase
-        .from('users')
-        .select('password')
-        .eq('id', user.id)
-        .single()
+    const { error } = await deleteAccount(user.id, deletePw)
 
-      if (fetchError || !userData) throw new Error('사용자 조회 실패')
-      
-      if (userData.password !== hashedPw) {
-        showMessage('비밀번호가 틀렸습니다.', true)
-        setLoading(false)
-        return
-      }
-
-      // Soft Delete
-      const { error: deleteError } = await supabase
-        .from('users')
-        .update({ is_deleted: true })
-        .eq('id', user.id)
-
-      if (deleteError) throw deleteError
-
-      alert('계정이 탈퇴되었습니다. 이용해 주셔서 감사합니다.')
-      onLogout() // Logs out and redirects to /
-    } catch (err) {
-      console.error(err)
-      showMessage('회원 탈퇴 중 오류가 발생했습니다.', true)
+    if (error) {
+      showMessage(error.message || '회원 탈퇴 중 오류가 발생했습니다.', true)
       setLoading(false)
+      return
     }
+
+    alert('계정이 탈퇴되었습니다. 이용해 주셔서 감사합니다.')
+    onLogout() // Logs out and redirects to /
   }
 
   return (

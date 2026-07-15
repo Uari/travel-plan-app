@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { supabase } from '../lib/supabase.js'
-import { hashPassword } from '../lib/hash.js'
+import { login, signup } from '../lib/authApi.js'
 import './LoginPage.css'
 
 export default function LoginPage({ onLogin }) {
@@ -43,79 +42,32 @@ export default function LoginPage({ onLogin }) {
       return
     }
 
+    if (mode === 'signup' && !trimmedName) {
+      triggerError('닉네임을 입력해주세요.')
+      return
+    }
+
     setLoading(true)
 
     try {
-      const hashedPassword = await hashPassword(trimmedPw)
-
       if (mode === 'signup') {
-        if (!trimmedName) {
-          triggerError('닉네임을 입력해주세요.')
-          setLoading(false)
+        const { data, error } = await signup(trimmedId, trimmedPw, trimmedName)
+        if (error) {
+          triggerError(error.message || '회원가입에 실패했습니다.')
           return
         }
 
-        // 1. Check if ID exists
-        const { data: existingUser } = await supabase
-          .from('users')
-          .select('id')
-          .eq('id', trimmedId)
-          .single()
-
-        if (existingUser) {
-          triggerError('이미 존재하는 아이디입니다.')
-          setLoading(false)
+        localStorage.setItem('travelplan_session', JSON.stringify(data.user))
+        onLogin(data.user)
+      } else {
+        const { data, error } = await login(trimmedId, trimmedPw)
+        if (error) {
+          triggerError(error.message || '로그인에 실패했습니다.')
           return
         }
 
-        // 2. Insert new user
-        const { error: insertError } = await supabase
-          .from('users')
-          .insert({
-            id: trimmedId,
-            password: hashedPassword,
-            name: trimmedName
-          })
-
-        if (insertError) {
-          throw insertError
-        }
-
-        // Success -> Login
-        const sessionObj = { id: trimmedId, name: trimmedName }
-        localStorage.setItem('travelplan_session', JSON.stringify(sessionObj))
-        onLogin(sessionObj)
-      } 
-      else {
-        // Login Mode
-        const { data: user, error } = await supabase
-          .from('users')
-          .select('id, name, password, is_deleted')
-          .eq('id', trimmedId)
-          .single()
-
-        if (error || !user) {
-          triggerError('아이디가 존재하지 않습니다.')
-          setLoading(false)
-          return
-        }
-
-        if (user.is_deleted) {
-          triggerError('탈퇴 처리된 계정입니다.')
-          setLoading(false)
-          return
-        }
-
-        if (user.password !== hashedPassword) {
-          triggerError('비밀번호가 일치하지 않습니다.')
-          setLoading(false)
-          return
-        }
-
-        // Success -> Login (Pass ID and Name as JSON)
-        const sessionObj = { id: user.id, name: user.name }
-        localStorage.setItem('travelplan_session', JSON.stringify(sessionObj))
-        onLogin(sessionObj)
+        localStorage.setItem('travelplan_session', JSON.stringify(data.user))
+        onLogin(data.user)
       }
     } catch (err) {
       console.error(err)
