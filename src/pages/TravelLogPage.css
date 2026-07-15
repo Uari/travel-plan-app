@@ -41,6 +41,38 @@
   margin: 0 auto;
 }
 
+.travellog-map-wrap {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg, 16px);
+  padding: 0.5rem;
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+}
+
+.world-map-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.world-map-svg .wm-country {
+  fill: var(--map-land-start, rgba(99, 102, 241, 0.18));
+  stroke: var(--border-subtle, rgba(127, 127, 127, 0.35));
+  stroke-width: 0.4;
+}
+
+.world-map-svg .wm-dart {
+  cursor: pointer;
+}
+
+.travellog-map-hint {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0.25rem 0 0.15rem;
+}
+
 .travellog-list {
   display: flex;
   flex-direction: column;

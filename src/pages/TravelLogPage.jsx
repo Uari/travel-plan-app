@@ -1,13 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import { getCountry } from '../data/countries.js'
+import WorldMapSVG from '../components/WorldMapSVG.jsx'
+import BottomSheetModal from '../components/BottomSheetModal.jsx'
 import './TravelLogPage.css'
 
 export default function TravelLogPage({ user }) {
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
+  const [pickList, setPickList] = useState(null) // 같은 국가에 여행 여러 개일 때 선택 목록
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -46,6 +49,26 @@ export default function TravelLogPage({ user }) {
     setLoading(false)
   }
 
+  // 국가별 완료 여행 수 (세계지도 다트용)
+  const visited = useMemo(() => {
+    const counts = {}
+    logs.forEach((t) => {
+      const code = t.country_code || 'ETC'
+      counts[code] = (counts[code] || 0) + 1
+    })
+    return counts
+  }, [logs])
+
+  const openCountry = (code) => {
+    const inCountry = logs.filter((t) => (t.country_code || 'ETC') === code)
+    if (inCountry.length === 0) return
+    if (inCountry.length === 1) {
+      navigate(`/travel-log/${inCountry[0].id}`)
+    } else {
+      setPickList({ code, trips: inCountry })
+    }
+  }
+
   const describePlace = (trip) => {
     const country = getCountry(trip.country_code)
     if (trip.country_code === 'KR') {
@@ -78,28 +101,61 @@ export default function TravelLogPage({ user }) {
             <p>여행을 마치면 여기에 기록돼요!</p>
           </div>
         ) : (
-          <div className="travellog-list">
-            {logs.map((trip) => (
-              <motion.div
-                key={trip.id}
-                className="travellog-card"
-                whileHover={{ y: -4 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => navigate(`/travel-log/${trip.id}`)}
-              >
-                <div className="travellog-card-place">{describePlace(trip)}</div>
-                <h3 className="travellog-card-name">{trip.name}</h3>
-                {trip.start_date && (
-                  <div className="travellog-card-date">📅 {trip.start_date}</div>
-                )}
-                {trip.review_note && (
-                  <p className="travellog-card-review">“{trip.review_note}”</p>
-                )}
-              </motion.div>
-            ))}
-          </div>
+          <>
+            {/* 세계지도 (레벨 1) */}
+            <div className="travellog-map-wrap">
+              <WorldMapSVG visited={visited} onSelectCountry={openCountry} />
+              <p className="travellog-map-hint">지도의 다트를 눌러 여행 기록을 확인하세요 🎯</p>
+            </div>
+
+            {/* 여행 카드 목록 */}
+            <div className="travellog-list">
+              {logs.map((trip) => (
+                <motion.div
+                  key={trip.id}
+                  className="travellog-card"
+                  whileHover={{ y: -4 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => navigate(`/travel-log/${trip.id}`)}
+                >
+                  <div className="travellog-card-place">{describePlace(trip)}</div>
+                  <h3 className="travellog-card-name">{trip.name}</h3>
+                  {trip.start_date && <div className="travellog-card-date">📅 {trip.start_date}</div>}
+                  {trip.review_note && <p className="travellog-card-review">“{trip.review_note}”</p>}
+                </motion.div>
+              ))}
+            </div>
+          </>
         )}
       </main>
+
+      {/* 같은 국가에 여행이 여러 개일 때 방 선택 */}
+      <BottomSheetModal open={!!pickList} onClose={() => setPickList(null)}>
+        <div className="modal-title">
+          {pickList ? `${getCountry(pickList.code)?.emoji || '🌍'} ${getCountry(pickList.code)?.name || '해외'} 여행` : ''}
+        </div>
+        <p className="text-sm text-muted" style={{ marginBottom: '0.75rem' }}>어떤 여행을 볼까요?</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {pickList?.trips.map((t) => (
+            <button
+              key={t.id}
+              className="btn btn-secondary"
+              style={{ justifyContent: 'flex-start', textAlign: 'left' }}
+              onClick={() => {
+                setPickList(null)
+                navigate(`/travel-log/${t.id}`)
+              }}
+            >
+              {t.name}
+              {(t.region_label || t.destination_label) && (
+                <span style={{ color: 'var(--text-muted)', marginLeft: '0.4rem', fontSize: '0.8rem' }}>
+                  · {t.region_label || t.destination_label}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </BottomSheetModal>
     </div>
   )
 }
