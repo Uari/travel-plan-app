@@ -11,6 +11,8 @@ import ExpensePage from './pages/ExpensePage.jsx'
 import ChecklistPage from './pages/ChecklistPage.jsx'
 import AccommodationPage from './pages/AccommodationPage.jsx'
 import MyPage from './pages/MyPage.jsx'
+import TravelLogPage from './pages/TravelLogPage.jsx'
+import TravelLogDetailPage from './pages/TravelLogDetailPage.jsx'
 import './App.css'
 
 const TABS = [
@@ -71,6 +73,8 @@ export default function App() {
       <Route path="/" element={<Navigate to="/lobby" replace />} />
       <Route path="/lobby" element={<LobbyPage user={user} onLogout={handleLogout} />} />
       <Route path="/mypage" element={<MyPage user={user} onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />} />
+      <Route path="/travel-log" element={<TravelLogPage user={user} />} />
+      <Route path="/travel-log/:tripId" element={<TravelLogDetailPage user={user} />} />
       <Route path="/trip/:tripId/*" element={<TripLayout user={user} onLogout={handleLogout} />} />
       <Route path="*" element={<Navigate to="/lobby" replace />} />
     </Routes>

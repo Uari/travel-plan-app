@@ -198,12 +198,19 @@ export default function LobbyPage({ user, onLogout }) {
           >
             <span>✨</span> 새 여행 방 만들기
           </motion.button>
-          <motion.button 
+          <motion.button
             className="btn btn-secondary lobby-action-btn"
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowJoinModal(true)}
           >
             <span>🤝</span> 초대 코드로 입장
+          </motion.button>
+          <motion.button
+            className="btn btn-secondary lobby-action-btn"
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate('/travel-log')}
+          >
+            <span>📖</span> 여행 로그
           </motion.button>
         </div>
 
