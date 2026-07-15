@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react'
-import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import { getCountry } from '../data/countries.js'
@@ -69,17 +68,6 @@ export default function TravelLogPage({ user }) {
     }
   }
 
-  const describePlace = (trip) => {
-    const country = getCountry(trip.country_code)
-    if (trip.country_code === 'KR') {
-      const region = trip.region_label || trip.region_province || '대한민국'
-      return `🇰🇷 ${region}`
-    }
-    const emoji = country?.emoji || '🌍'
-    const name = country?.name || '해외'
-    return `${emoji} ${name}${trip.destination_label ? ` · ${trip.destination_label}` : ''}`
-  }
-
   return (
     <div className="travellog-page">
       <header className="travellog-header">
@@ -101,31 +89,11 @@ export default function TravelLogPage({ user }) {
             <p>여행을 마치면 여기에 기록돼요!</p>
           </div>
         ) : (
-          <>
-            {/* 세계지도 (레벨 1) */}
-            <div className="travellog-map-wrap">
-              <WorldMapSVG visited={visited} onSelectCountry={openCountry} />
-              <p className="travellog-map-hint">지도의 다트를 눌러 여행 기록을 확인하세요 🎯</p>
-            </div>
-
-            {/* 여행 카드 목록 */}
-            <div className="travellog-list">
-              {logs.map((trip) => (
-                <motion.div
-                  key={trip.id}
-                  className="travellog-card"
-                  whileHover={{ y: -4 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => navigate(`/travel-log/${trip.id}`)}
-                >
-                  <div className="travellog-card-place">{describePlace(trip)}</div>
-                  <h3 className="travellog-card-name">{trip.name}</h3>
-                  {trip.start_date && <div className="travellog-card-date">📅 {trip.start_date}</div>}
-                  {trip.review_note && <p className="travellog-card-review">“{trip.review_note}”</p>}
-                </motion.div>
-              ))}
-            </div>
-          </>
+          /* 세계지도 (레벨 1) */
+          <div className="travellog-map-wrap">
+            <WorldMapSVG visited={visited} onSelectCountry={openCountry} />
+            <p className="travellog-map-hint">지도의 다트를 눌러 여행 기록을 확인하세요 🎯</p>
+          </div>
         )}
       </main>
 
