@@ -42,7 +42,8 @@
 }
 
 .travellog-map-wrap {
-  background: var(--bg-elevated);
+  /* 세계지도 전용 바다(배경)색 — 육지와 대비가 크도록 지정 */
+  background: var(--wm-ocean, #0d1526);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg, 16px);
   padding: 0.5rem;
@@ -57,9 +58,18 @@
 }
 
 .world-map-svg .wm-country {
-  fill: var(--map-land-start, rgba(99, 102, 241, 0.18));
-  stroke: var(--border-subtle, rgba(127, 127, 127, 0.35));
-  stroke-width: 0.4;
+  fill: var(--wm-land, #3b4a6b);
+  stroke: var(--wm-stroke, rgba(148, 163, 184, 0.55));
+  stroke-width: 0.5;
+}
+
+/* 라이트 모드: 육지를 밝게, 바다를 옅게 */
+[data-theme="light"] .travellog-map-wrap {
+  --wm-ocean: #dbeafe;
+}
+[data-theme="light"] .world-map-svg .wm-country {
+  --wm-land: #ffffff;
+  --wm-stroke: rgba(71, 85, 105, 0.55);
 }
 
 .world-map-svg .wm-dart {
