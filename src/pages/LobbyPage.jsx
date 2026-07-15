@@ -259,19 +259,19 @@ export default function LobbyPage({ user, onLogout }) {
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowCreateModal(true)}
           >
-            <span>✨</span> 새 여행 방 만들기
+            <span>✨</span> 새 여행 만들기
           </motion.button>
           <motion.button
             className="btn btn-secondary lobby-action-btn"
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowJoinModal(true)}
           >
-            <span>🤝</span> 초대 코드로 입장
+            <span>🤝</span> 코드로 입장
           </motion.button>
         </div>
 
         <div className="lobby-trip-list">
-          <h2>나의 여행 방</h2>
+          <h2>내 여행</h2>
 
           <div className="lobby-tabs">
             <button
@@ -284,18 +284,18 @@ export default function LobbyPage({ user, onLogout }) {
               className={`lobby-tab${activeTab === 'completed' ? ' active' : ''}`}
               onClick={() => setActiveTab('completed')}
             >
-              여행 완료 ({completedTrips.length})
+              완료 ({completedTrips.length})
             </button>
           </div>
 
           {loading ? (
-            <p className="loading-text">방 목록을 불러오는 중...</p>
+            <p className="loading-text">여행 목록을 불러오는 중...</p>
           ) : shownTrips.length === 0 ? (
             <div className="empty-state">
               {activeTab === 'completed' ? (
                 '아직 완료된 여행이 없습니다.'
               ) : (
-                <>아직 진행 중인 여행 방이 없습니다.<br/>새로운 방을 만들거나 코드로 입장해보세요!</>
+                <>아직 진행 중인 여행이 없습니다.<br/>새 여행을 만들거나 코드로 입장해보세요!</>
               )}
             </div>
           ) : (
@@ -403,10 +403,10 @@ export default function LobbyPage({ user, onLogout }) {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="modal-handle" />
-              <div className="modal-title">✨ 새 여행 방 만들기</div>
+              <div className="modal-title">✨ 새 여행 만들기</div>
               <form onSubmit={handleCreateTrip}>
                 <div className="input-group">
-                  <label className="input-label">방 이름 (여행 제목)</label>
+                  <label className="input-label">여행 이름</label>
                   <input 
                     type="text" 
                     className="input" 
@@ -450,10 +450,10 @@ export default function LobbyPage({ user, onLogout }) {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="modal-handle" />
-              <div className="modal-title">🤝 초대 코드로 입장하기</div>
+              <div className="modal-title">🤝 코드로 입장</div>
               <form onSubmit={handleJoinTrip}>
                 <div className="input-group">
-                  <label className="input-label">방 초대 코드 (6자리)</label>
+                  <label className="input-label">초대 코드 (6자리)</label>
                   <input 
                     type="text" 
                     className="input" 
