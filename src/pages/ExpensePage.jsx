@@ -17,7 +17,7 @@ const CATEGORIES = [
 ]
 
 export default function ExpensePage() {
-  const { user, tripId, membersMap, isAdmin, tripData } = useTripContext()
+  const { user, tripId, membersMap, isAdmin, tripData, setTripData } = useTripContext()
   const { data: expenses, loading, refetch: loadExpenses } = useSupabaseQuery(
     () => supabase.from('expenses').select('*').eq('trip_id', tripId).order('created_at'),
     [tripId]
@@ -36,13 +36,17 @@ export default function ExpensePage() {
   const handleMemberCountChange = (newCount) => {
     if (newCount < 1) return
     setMemberCount(newCount)
+    // Context의 tripData도 함께 갱신해, 다른 탭에 갔다 와서 페이지가 다시
+    // 마운트될 때 옛날 인원수로 되돌아가지 않도록 한다.
+    setTripData((prev) => (prev ? { ...prev, member_count: newCount } : prev))
 
     // Debounce DB update
     if (updateTimeoutRef.current) {
       clearTimeout(updateTimeoutRef.current)
     }
     updateTimeoutRef.current = setTimeout(async () => {
-      await supabase.from('trips').update({ member_count: newCount }).eq('id', tripId)
+      const { error } = await supabase.from('trips').update({ member_count: newCount }).eq('id', tripId)
+      if (error) console.error(error)
     }, 500)
   }
 
