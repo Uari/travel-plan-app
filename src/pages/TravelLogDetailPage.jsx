@@ -175,7 +175,7 @@ export default function TravelLogDetailPage({ user }) {
 
   if (loading) {
     return (
-      <div className="travellog-detail">
+      <div className="tld-page">
         <div className="empty-state">
           <div className="empty-icon" style={{ animation: 'floatLoading 1.5s ease-in-out infinite' }}>✈️</div>
           <p>여행 로그를 불러오는 중...</p>
@@ -186,13 +186,9 @@ export default function TravelLogDetailPage({ user }) {
 
   if (!trip) {
     return (
-      <div className="travellog-detail">
-        <header className="travellog-header">
-          <button className="back-btn" onClick={() => navigate('/travel-log')}>← 여행 로그</button>
-          <h2>여행 로그</h2>
-          <div style={{ width: 48 }} />
-        </header>
+      <div className="tld-page">
         <div className="empty-state">
+          <button className="btn btn-secondary btn-sm" style={{ marginBottom: '1rem' }} onClick={() => navigate('/travel-log')}>← 여행 로그</button>
           <div className="empty-icon">❓</div>
           <p>여행 정보를 찾을 수 없어요.</p>
         </div>
@@ -200,88 +196,104 @@ export default function TravelLogDetailPage({ user }) {
     )
   }
 
+  const coverPhoto = photos[0]
+
+  const uploadLabel = (
+    <label className={`tld-add-photo${uploading || photos.length >= MAX_PHOTOS ? ' disabled' : ''}`}>
+      {uploading ? '업로드 중…' : '＋ 사진'}
+      <input
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleUpload}
+        disabled={uploading || photos.length >= MAX_PHOTOS}
+        style={{ display: 'none' }}
+      />
+    </label>
+  )
+
   return (
-    <div className="travellog-detail">
-      <header className="travellog-header">
-        <button className="back-btn" onClick={() => navigate('/travel-log')}>← 여행 로그</button>
-        <h2>{trip.name}</h2>
-        <div style={{ width: 48 }} />
-      </header>
+    <div className="tld-page">
+      {/* 커버 히어로 */}
+      <div
+        className={`tld-hero${coverPhoto ? ' has-cover' : ''}`}
+        style={coverPhoto ? { backgroundImage: `url(${coverPhoto.url})` } : undefined}
+      >
+        <button className="tld-back" onClick={() => navigate('/travel-log')} aria-label="뒤로">←</button>
+        <div className="tld-hero-overlay">
+          <span className="tld-hero-place">{placeLabel()}</span>
+          <h1 className="tld-hero-title">{trip.name}</h1>
+          {trip.start_date && <span className="tld-hero-date">📅 {trip.start_date}</span>}
+        </div>
+      </div>
 
-      <main className="travellog-detail-main">
-        <div className="tld-place">{placeLabel()}</div>
-        {trip.review_note && <p className="tld-review">“{trip.review_note}”</p>}
+      <main className="tld-body">
+        {trip.review_note && <blockquote className="tld-quote">{trip.review_note}</blockquote>}
 
-        {/* 계획 요약 */}
-        <section className="tld-section">
-          <h3 className="tld-section-title">📋 여행 요약</h3>
-          <div className="tld-summary-grid">
-            <div className="tld-stat">
-              <span className="tld-stat-label">여행 시작일</span>
-              <span className="tld-stat-value">{trip.start_date || '미정'}</span>
-            </div>
-            <div className="tld-stat">
-              <span className="tld-stat-label">총 지출</span>
-              <span className="tld-stat-value">{summary.total.toLocaleString()}원</span>
-            </div>
-            <div className="tld-stat">
-              <span className="tld-stat-label">1인당 ({summary.memberCount}명)</span>
-              <span className="tld-stat-value">{summary.perPerson.toLocaleString()}원</span>
-            </div>
-            <div className="tld-stat">
-              <span className="tld-stat-label">준비물</span>
-              <span className="tld-stat-value">{summary.checkDone}/{summary.checkTotal} 완료</span>
-            </div>
-            {selectedAcc && (
-              <div className="tld-stat tld-stat-wide">
-                <span className="tld-stat-label">확정 숙소</span>
-                <span className="tld-stat-value">🏨 {selectedAcc.name}</span>
-              </div>
-            )}
+        {/* 스탯 칩 */}
+        <div className="tld-stats">
+          <div className="tld-chip">
+            <span className="tld-chip-v">{summary.total.toLocaleString()}</span>
+            <span className="tld-chip-l">총 지출(원)</span>
           </div>
+          <div className="tld-chip">
+            <span className="tld-chip-v">{summary.perPerson.toLocaleString()}</span>
+            <span className="tld-chip-l">1인당(원)</span>
+          </div>
+          <div className="tld-chip">
+            <span className="tld-chip-v">{summary.checkDone}/{summary.checkTotal}</span>
+            <span className="tld-chip-l">준비물</span>
+          </div>
+          <div className="tld-chip">
+            <span className="tld-chip-v">{photos.length}</span>
+            <span className="tld-chip-l">사진</span>
+          </div>
+        </div>
 
-          {summary.days.length > 0 && (
-            <div className="tld-itinerary">
+        {selectedAcc && (
+          <div className="tld-accom">🏨 확정 숙소 · <strong>{selectedAcc.name}</strong></div>
+        )}
+
+        {/* 일정 타임라인 */}
+        {summary.days.length > 0 && (
+          <section className="tld-section">
+            <h3 className="tld-h">🗺️ 여행 일정</h3>
+            <div className="tld-timeline">
               {summary.days.map((day) => (
-                <div key={day} className="tld-day">
-                  <div className="tld-day-label">{day}</div>
-                  <ul className="tld-day-list">
-                    {summary.grouped[day].map((p) => (
-                      <li key={p.id}>
-                        {p.time_label && <span className="tld-time">{p.time_label}</span>}
-                        <span>{p.title}</span>
-                        {p.location && <span className="tld-loc">📍{p.location}</span>}
-                      </li>
-                    ))}
-                  </ul>
+                <div key={day} className="tld-tl-day">
+                  <span className="tld-tl-dot" />
+                  <div className="tld-tl-content">
+                    <div className="tld-tl-daylabel">{day}</div>
+                    <ul className="tld-tl-list">
+                      {summary.grouped[day].map((p) => (
+                        <li key={p.id}>
+                          {p.time_label && <span className="tld-time">{p.time_label}</span>}
+                          <span className="tld-tl-title">{p.title}</span>
+                          {p.location && <span className="tld-loc">📍{p.location}</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               ))}
             </div>
-          )}
-        </section>
+          </section>
+        )}
 
-        {/* 여행 사진 */}
+        {/* 사진 갤러리 */}
         <section className="tld-section">
           <div className="tld-section-header">
-            <h3 className="tld-section-title">📸 여행 사진 ({photos.length}/{MAX_PHOTOS})</h3>
-            <label className={`btn btn-primary btn-sm tld-upload-btn${uploading || photos.length >= MAX_PHOTOS ? ' disabled' : ''}`}>
-              {uploading ? '업로드 중...' : '+ 사진 추가'}
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleUpload}
-                disabled={uploading || photos.length >= MAX_PHOTOS}
-                style={{ display: 'none' }}
-              />
-            </label>
+            <h3 className="tld-h">📸 사진 <span className="tld-count">{photos.length}/{MAX_PHOTOS}</span></h3>
+            {photos.length > 0 && uploadLabel}
           </div>
 
           {photos.length === 0 ? (
-            <div className="tld-photos-empty">
-              <p>아직 올린 사진이 없어요.</p>
-              <p>다녀온 여행의 사진을 남겨보세요!</p>
-            </div>
+            <label className={`tld-photos-empty${uploading ? ' disabled' : ''}`}>
+              <div className="tld-photos-empty-icon">🖼️</div>
+              <p>{uploading ? '업로드 중…' : '여행 사진을 남겨보세요'}</p>
+              <span>탭해서 추가 (최대 {MAX_PHOTOS}장)</span>
+              <input type="file" accept="image/*" multiple onChange={handleUpload} disabled={uploading} style={{ display: 'none' }} />
+            </label>
           ) : (
             <div className="tld-photo-grid">
               {photos.map((photo) => (
