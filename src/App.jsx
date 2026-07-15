@@ -177,7 +177,8 @@ function TripLayout({ user, onLogout }) {
     )
   }
 
-  const tripContextValue = { user, tripId, membersMap, isAdmin, tripData, setTripData }
+  const isCompleted = tripData?.is_completed === true
+  const tripContextValue = { user, tripId, membersMap, isAdmin, tripData, setTripData, isCompleted }
 
   return (
     <TripContext.Provider value={tripContextValue}>
@@ -211,6 +212,17 @@ function TripLayout({ user, onLogout }) {
           </button>
         </div>
       </header>
+
+      {isCompleted && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center',
+          fontSize: '0.75rem', color: 'var(--accent-emerald, #10b981)',
+          background: 'rgba(16,185,129,0.1)', borderBottom: '1px solid rgba(16,185,129,0.25)',
+          padding: '0.4rem 0.75rem', textAlign: 'center'
+        }}>
+          ✅ 완료된 여행이에요 · 읽기 전용 (수정하려면 홈에서 완료를 취소하세요)
+        </div>
+      )}
 
       {/* Page content */}
       <main style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', minHeight: 0 }}>

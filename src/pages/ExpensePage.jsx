@@ -17,7 +17,7 @@ const CATEGORIES = [
 ]
 
 export default function ExpensePage() {
-  const { user, tripId, membersMap, isAdmin, tripData, setTripData } = useTripContext()
+  const { user, tripId, membersMap, isAdmin, tripData, setTripData, isCompleted } = useTripContext()
   const { data: expenses, loading, refetch: loadExpenses } = useSupabaseQuery(
     () => supabase.from('expenses').select('*').eq('trip_id', tripId).order('created_at'),
     [tripId]
@@ -98,9 +98,11 @@ export default function ExpensePage() {
     <div className="expense-page">
       <div className="expense-header">
         <h2 className="page-title" style={{ marginBottom: 0 }}>비용 정산 💸</h2>
-        <button id="expense-add-btn" className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>
-          + 추가
-        </button>
+        {!isCompleted && (
+          <button id="expense-add-btn" className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>
+            + 추가
+          </button>
+        )}
       </div>
 
       {/* Summary card */}
@@ -114,10 +116,12 @@ export default function ExpensePage() {
           <div className="summary-item">
             <span className="summary-label">총 인원</span>
             <div className="member-count-stepper">
-              <button 
-                type="button" 
-                className="stepper-btn" 
+              <button
+                type="button"
+                className="stepper-btn"
                 onClick={() => handleMemberCountChange(memberCount - 1)}
+                disabled={isCompleted}
+                style={isCompleted ? { opacity: 0.4, cursor: 'default' } : undefined}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
               </button>
@@ -125,10 +129,12 @@ export default function ExpensePage() {
                 <span className="stepper-value">{memberCount}</span>
                 <span className="stepper-unit">명</span>
               </div>
-              <button 
-                type="button" 
-                className="stepper-btn" 
+              <button
+                type="button"
+                className="stepper-btn"
                 onClick={() => handleMemberCountChange(memberCount + 1)}
+                disabled={isCompleted}
+                style={isCompleted ? { opacity: 0.4, cursor: 'default' } : undefined}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
               </button>
@@ -182,7 +188,7 @@ export default function ExpensePage() {
             const cat = CATEGORIES.find((c) => c.id === expense.category) || CATEGORIES[5]
             const memberInfo = membersMap[expense.user_id]
             const displayAuthor = getDisplayName(membersMap, expense.user_id, { fallback: expense.created_by || '알 수 없음' })
-            const canDelete = canEditItem(isAdmin, expense, user)
+            const canDelete = !isCompleted && canEditItem(isAdmin, expense, user)
 
             return (
               <motion.div

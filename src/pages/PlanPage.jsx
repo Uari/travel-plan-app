@@ -8,7 +8,7 @@ import BottomSheetModal from '../components/BottomSheetModal.jsx'
 import './PlanPage.css'
 
 export default function PlanPage() {
-  const { user, tripId, membersMap, isAdmin, tripData } = useTripContext()
+  const { user, tripId, membersMap, isAdmin, tripData, isCompleted } = useTripContext()
   const { data: plans, loading, refetch: loadPlans } = useSupabaseQuery(
     () => supabase.from('plans').select('*').eq('trip_id', tripId).order('day_label').order('time_label'),
     [tripId]
@@ -106,9 +106,11 @@ export default function PlanPage() {
     <div className="plan-page">
       <div className="plan-header">
         <h2 className="page-title" style={{ marginBottom: 0 }}>여행 일정 🗓️</h2>
-        <button id="plan-add-btn" className="btn btn-primary btn-sm" onClick={openAdd}>
-          + 추가
-        </button>
+        {!isCompleted && (
+          <button id="plan-add-btn" className="btn btn-primary btn-sm" onClick={openAdd}>
+            + 추가
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -141,6 +143,7 @@ export default function PlanPage() {
                   onEdit={() => openEdit(plan)}
                   onDelete={() => handleDelete(plan.id)}
                   currentUser={user}
+                  readOnly={isCompleted}
                 />
               ))}
             </div>
@@ -266,14 +269,14 @@ export default function PlanPage() {
   )
 }
 
-function PlanCard({ plan, expanded, onToggle, onEdit, onDelete, currentUser, membersMap, isAdmin }) {
+function PlanCard({ plan, expanded, onToggle, onEdit, onDelete, currentUser, membersMap, isAdmin, readOnly }) {
   const memberInfo = membersMap ? membersMap[plan.user_id] : null
   const displayAuthor = getDisplayName(membersMap, plan.user_id, {
     fallback: plan.created_by || '알 수 없음',
     deletedSuffix: '(탈퇴)',
   })
 
-  const canEdit = canEditItem(isAdmin, plan, currentUser)
+  const canEdit = !readOnly && canEditItem(isAdmin, plan, currentUser)
 
   return (
     <motion.div

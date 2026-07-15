@@ -8,7 +8,7 @@ import BottomSheetModal from '../components/BottomSheetModal.jsx'
 import './AccommodationPage.css'
 
 export default function AccommodationPage() {
-  const { user, tripId, membersMap, isAdmin } = useTripContext()
+  const { user, tripId, membersMap, isAdmin, isCompleted } = useTripContext()
   const { data: fetchedAccommodations, loading, refetch: loadAccommodations } = useSupabaseQuery(
     () => supabase.from('accommodations').select('*').eq('trip_id', tripId).order('created_at', { ascending: true }),
     [tripId]
@@ -222,7 +222,7 @@ export default function AccommodationPage() {
             const memberInfo = membersMap[acc.user_id]
             const displayAuthor = getDisplayName(membersMap, acc.user_id, { fallback: acc.created_by || '알 수 없음' })
 
-            const canEditDelete = canEditItem(isAdmin, acc, user)
+            const canEditDelete = !isCompleted && canEditItem(isAdmin, acc, user)
             const hasMyVote = acc.votes?.includes(user.id) || acc.votes?.includes(user.name)
 
             return (
@@ -276,11 +276,13 @@ export default function AccommodationPage() {
                         <div className="acc-actions">
                           <button
                             className={`vote-btn ${hasMyVote ? 'voted' : ''}`}
-                            onClick={() => toggleVote(acc)}
+                            onClick={() => !isCompleted && toggleVote(acc)}
+                            disabled={isCompleted}
+                            style={isCompleted ? { cursor: 'default' } : undefined}
                           >
                             👍 {acc.votes?.length || 0}
                           </button>
-                          {(!acc.is_selected && isAdmin) && (
+                          {(!acc.is_selected && isAdmin && !isCompleted) && (
                             <button className="select-btn" onClick={() => selectAccommodation(acc.id)}>
                               ✅ 확정하기
                             </button>
@@ -305,12 +307,14 @@ export default function AccommodationPage() {
         )}
       </div>
 
-      <button className="fab-button" onClick={openAddModal} title="숙소 후보 추가">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-      </button>
+      {!isCompleted && (
+        <button className="fab-button" onClick={openAddModal} title="숙소 후보 추가">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
+      )}
 
       {/* Add Modal */}
       <BottomSheetModal open={showModal} onClose={() => setShowModal(false)}>

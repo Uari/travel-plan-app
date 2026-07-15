@@ -10,7 +10,7 @@ import './ChecklistPage.css'
 const QUICK_ITEMS = ['👕 여벌 옷', '🔌 충전기', '💊 상비약', '🪥 세면도구', '📸 카메라', '☂️ 우산', '🏧 현금 환전', '🗺️ 지도 저장']
 
 export default function ChecklistPage() {
-  const { user, tripId, membersMap, isAdmin } = useTripContext()
+  const { user, tripId, membersMap, isAdmin, isCompleted } = useTripContext()
   const { data: items, loading, refetch: loadItems } = useSupabaseQuery(
     () => supabase.from('checklist').select('*').eq('trip_id', tripId).order('created_at'),
     [tripId]
@@ -102,6 +102,9 @@ export default function ChecklistPage() {
   }
 
   const toggleDone = async (id, currentAssigned, currentCompleted) => {
+    // 완료된 여행은 읽기 전용
+    if (isCompleted) return
+
     // 1. 보안 체크: 본인이 할당되어 있지 않고 방장도 아니면 거부
     if (!currentAssigned.includes(user.id) && !currentAssigned.includes(user.name) && !isAdmin) {
       alert("담당자(혹은 방장)만 체크할 수 있습니다.")
@@ -178,27 +181,31 @@ export default function ChecklistPage() {
       </div>
 
       {/* Quick add items */}
-      <div className="quick-items-label section-label">빠른 추가</div>
-      <div className="quick-items">
-        {QUICK_ITEMS.map((q) => {
-          const exists = items.some((i) => i.item.includes(q.split(' ').slice(1).join(' ')))
-          return (
-            <button
-              key={q}
-              id={`quick-add-${q}`}
-              className={`quick-item-btn${exists ? ' exists' : ''}`}
-              onClick={() => !exists && openAddModal(q)}
-              disabled={exists}
-            >
-              {q}
-            </button>
-          )
-        })}
-      </div>
+      {!isCompleted && (
+        <>
+          <div className="quick-items-label section-label">빠른 추가</div>
+          <div className="quick-items">
+            {QUICK_ITEMS.map((q) => {
+              const exists = items.some((i) => i.item.includes(q.split(' ').slice(1).join(' ')))
+              return (
+                <button
+                  key={q}
+                  id={`quick-add-${q}`}
+                  className={`quick-item-btn${exists ? ' exists' : ''}`}
+                  onClick={() => !exists && openAddModal(q)}
+                  disabled={exists}
+                >
+                  {q}
+                </button>
+              )
+            })}
+          </div>
 
-      <div style={{ textAlign: 'right', marginBottom: '1rem' }}>
-        <button className="btn btn-primary btn-sm" onClick={() => openAddModal()}>+ 직접 추가</button>
-      </div>
+          <div style={{ textAlign: 'right', marginBottom: '1rem' }}>
+            <button className="btn btn-primary btn-sm" onClick={() => openAddModal()}>+ 직접 추가</button>
+          </div>
+        </>
+      )}
 
       {/* Pending items */}
       {loading ? (
@@ -230,6 +237,7 @@ export default function ChecklistPage() {
                     onToggle={() => toggleDone(item.id, item.assigned_to || [], item.completed_by || [])}
                     onEdit={() => openEditModal(item)}
                     onDelete={() => deleteItem(item.id)}
+                    readOnly={isCompleted}
                   />
                 ))}
               </AnimatePresence>
@@ -250,6 +258,7 @@ export default function ChecklistPage() {
                     onToggle={() => toggleDone(item.id, item.assigned_to || [], item.completed_by || [])}
                     onEdit={() => openEditModal(item)}
                     onDelete={() => deleteItem(item.id)}
+                    readOnly={isCompleted}
                   />
                 ))}
               </AnimatePresence>
@@ -317,7 +326,7 @@ export default function ChecklistPage() {
   )
 }
 
-function CheckItem({ item, currentUser, membersMap, isAdmin, onToggle, onEdit, onDelete }) {
+function CheckItem({ item, currentUser, membersMap, isAdmin, onToggle, onEdit, onDelete, readOnly }) {
   const assigned = item.assigned_to || []
   const completed = item.completed_by || []
   
@@ -326,7 +335,8 @@ function CheckItem({ item, currentUser, membersMap, isAdmin, onToggle, onEdit, o
   // Have I checked it?
   const didICheck = completed.includes(currentUser.id) || completed.includes(currentUser.name)
 
-  const canEdit = isAdmin || amIAssigned || item.created_by === currentUser.name || item.created_by === currentUser.id
+  const canEdit = !readOnly && (isAdmin || amIAssigned || item.created_by === currentUser.name || item.created_by === currentUser.id)
+  const canToggle = !readOnly && (amIAssigned || isAdmin)
 
   return (
     <motion.div
@@ -337,11 +347,11 @@ function CheckItem({ item, currentUser, membersMap, isAdmin, onToggle, onEdit, o
       exit={{ opacity: 0, x: 12, height: 0, marginBottom: 0 }}
       transition={{ duration: 0.2 }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', flex: 1, cursor: (amIAssigned || isAdmin) ? 'pointer' : 'default' }} onClick={onToggle}>
+      <div style={{ display: 'flex', alignItems: 'center', flex: 1, cursor: canToggle ? 'pointer' : 'default' }} onClick={canToggle ? onToggle : undefined}>
         <button
           className={`check-box${didICheck || item.is_done ? ' checked' : ''}`}
-          style={{ opacity: (amIAssigned || isAdmin) ? 1 : 0.4 }}
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggle(); }}
+          style={{ opacity: canToggle ? 1 : (didICheck || item.is_done ? 0.7 : 0.4) }}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (canToggle) onToggle(); }}
         >
           {(didICheck || item.is_done) && (
             <motion.span
