@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { supabase } from '../lib/supabase.js'
+import { useTripContext } from '../context/TripContext.jsx'
+import { useSupabaseQuery } from '../hooks/useSupabaseQuery.js'
+import { getDisplayName, canEditItem } from '../lib/tripMembers.js'
+import BottomSheetModal from '../components/BottomSheetModal.jsx'
 import './ExpensePage.css'
 
 const CATEGORIES = [
@@ -12,45 +16,22 @@ const CATEGORIES = [
   { id: 'etc', label: '📦 기타', color: 'var(--text-muted)' },
 ]
 
-export default function ExpensePage({ user, tripId, membersMap, isAdmin }) {
-  const [expenses, setExpenses] = useState([])
-  const [loading, setLoading] = useState(true)
+export default function ExpensePage() {
+  const { user, tripId, membersMap, isAdmin, tripData } = useTripContext()
+  const { data: expenses, loading, refetch: loadExpenses } = useSupabaseQuery(
+    () => supabase.from('expenses').select('*').eq('trip_id', tripId).order('created_at'),
+    [tripId]
+  )
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({ label: '', amount: '', category: 'etc' })
-  const [memberCount, setMemberCount] = useState(1)
-  
+  const [memberCount, setMemberCount] = useState(tripData?.member_count || 1)
+
   // Debounce ref
   const updateTimeoutRef = useRef(null)
 
   useEffect(() => {
-    if (tripId) {
-      loadExpenses()
-      loadTripInfo()
-    }
+    setMemberCount(tripData?.member_count || 1)
   }, [tripId])
-
-  const loadTripInfo = async () => {
-    const { data } = await supabase.from('trips').select('member_count').eq('id', tripId).single()
-    if (data) {
-      setMemberCount(data.member_count || 1)
-    }
-  }
-
-  const loadExpenses = async () => {
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('expenses')
-      .select('*')
-      .eq('trip_id', tripId)
-      .order('created_at')
-      
-    if (!error && data) {
-      setExpenses(data)
-    } else {
-      setExpenses([])
-    }
-    setLoading(false)
-  }
 
   const handleMemberCountChange = (newCount) => {
     if (newCount < 1) return
@@ -79,10 +60,10 @@ export default function ExpensePage({ user, tripId, membersMap, isAdmin }) {
     const { error } = await supabase.from('expenses').insert(payload)
     if (error) {
       console.error(error)
-      setExpenses((prev) => [...prev, { id: Date.now().toString(), ...payload }])
-    } else {
-      await loadExpenses()
+      alert('비용 추가에 실패했습니다. 다시 시도해주세요.')
+      return
     }
+    await loadExpenses()
     setForm({ label: '', amount: '', category: 'etc' })
     setShowModal(false)
   }
@@ -91,10 +72,10 @@ export default function ExpensePage({ user, tripId, membersMap, isAdmin }) {
     const { error } = await supabase.from('expenses').delete().eq('id', id)
     if (error) {
       console.error(error)
-      setExpenses((prev) => prev.filter((e) => e.id !== id))
-    } else {
-      await loadExpenses()
+      alert('비용 삭제에 실패했습니다. 다시 시도해주세요.')
+      return
     }
+    await loadExpenses()
   }
 
   const total = expenses.reduce((sum, e) => sum + Number(e.amount), 0)
@@ -196,10 +177,8 @@ export default function ExpensePage({ user, tripId, membersMap, isAdmin }) {
           {expenses.map((expense) => {
             const cat = CATEGORIES.find((c) => c.id === expense.category) || CATEGORIES[5]
             const memberInfo = membersMap[expense.user_id]
-            const displayAuthor = memberInfo 
-              ? `${memberInfo.name}${memberInfo.is_deleted ? ' (탈퇴함)' : ''}`
-              : (expense.created_by || '알 수 없음')
-            const canDelete = isAdmin || expense.user_id === user.id || expense.created_by === user.name
+            const displayAuthor = getDisplayName(membersMap, expense.user_id, { fallback: expense.created_by || '알 수 없음' })
+            const canDelete = canEditItem(isAdmin, expense, user)
 
             return (
               <motion.div
@@ -239,24 +218,7 @@ export default function ExpensePage({ user, tripId, membersMap, isAdmin }) {
       )}
 
       {/* Add modal */}
-      <AnimatePresence>
-        {showModal && (
-          <motion.div
-            className="modal-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowModal(false)}
-          >
-            <motion.div
-              className="modal-sheet"
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 280, damping: 28 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="modal-handle" />
+      <BottomSheetModal open={showModal} onClose={() => setShowModal(false)}>
               <div className="modal-title">➕ 비용 추가</div>
 
               <form onSubmit={handleSubmit}>
@@ -307,10 +269,7 @@ export default function ExpensePage({ user, tripId, membersMap, isAdmin }) {
                   <button id="expense-submit-btn" type="submit" className="btn btn-primary" style={{ flex: 2 }}>비용 추가</button>
                 </div>
               </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      </BottomSheetModal>
     </div>
   )
 }

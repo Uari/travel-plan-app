@@ -1,15 +1,21 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase.js'
+import { useTripContext } from '../context/TripContext.jsx'
+import { useSupabaseQuery } from '../hooks/useSupabaseQuery.js'
+import { getDisplayName, canEditItem } from '../lib/tripMembers.js'
+import BottomSheetModal from '../components/BottomSheetModal.jsx'
 import './PlanPage.css'
 
-export default function PlanPage({ user, tripId, membersMap, isAdmin }) {
-  const [plans, setPlans] = useState([])
-  const [loading, setLoading] = useState(true)
+export default function PlanPage() {
+  const { user, tripId, membersMap, isAdmin, tripData } = useTripContext()
+  const { data: plans, loading, refetch: loadPlans } = useSupabaseQuery(
+    () => supabase.from('plans').select('*').eq('trip_id', tripId).order('day_label').order('time_label'),
+    [tripId]
+  )
   const [showModal, setShowModal] = useState(false)
   const [editItem, setEditItem] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
-  const [startDate, setStartDate] = useState(null)
 
   const [form, setForm] = useState({
     day_label: 'Day 1',
@@ -20,38 +26,6 @@ export default function PlanPage({ user, tripId, membersMap, isAdmin }) {
     accommodation_img_url: '',
     notes: '',
   })
-
-  useEffect(() => {
-    if (tripId) {
-      loadTripInfo()
-      loadPlans()
-    }
-  }, [tripId])
-
-  const loadTripInfo = async () => {
-    const { data } = await supabase.from('trips').select('start_date').eq('id', tripId).single()
-    if (data) {
-      setStartDate(data.start_date)
-    }
-  }
-
-  const loadPlans = async () => {
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('plans')
-      .select('*')
-      .eq('trip_id', tripId)
-      .order('day_label')
-      .order('time_label')
-      
-    if (!error && data) {
-      setPlans(data)
-    } else {
-      console.error("Plan fetch error:", error)
-      setPlans([])
-    }
-    setLoading(false)
-  }
 
   const openAdd = () => {
     setEditItem(null)
@@ -80,18 +54,18 @@ export default function PlanPage({ user, tripId, membersMap, isAdmin }) {
       const { error } = await supabase.from('plans').update(payload).eq('id', editItem.id)
       if (error) {
         console.error(error)
-        setPlans((prev) => prev.map((p) => p.id === editItem.id ? { ...p, ...payload } : p))
-      } else {
-        await loadPlans()
+        alert('일정 수정에 실패했습니다. 다시 시도해주세요.')
+        return
       }
+      await loadPlans()
     } else {
       const { error } = await supabase.from('plans').insert(payload)
       if (error) {
         console.error(error)
-        setPlans((prev) => [...prev, { id: Date.now().toString(), ...payload }])
-      } else {
-        await loadPlans()
+        alert('일정 추가에 실패했습니다. 다시 시도해주세요.')
+        return
       }
+      await loadPlans()
     }
     setShowModal(false)
   }
@@ -100,10 +74,10 @@ export default function PlanPage({ user, tripId, membersMap, isAdmin }) {
     const { error } = await supabase.from('plans').delete().eq('id', id)
     if (error) {
       console.error(error)
-      setPlans((prev) => prev.filter((p) => p.id !== id))
-    } else {
-      await loadPlans()
+      alert('일정 삭제에 실패했습니다. 다시 시도해주세요.')
+      return
     }
+    await loadPlans()
   }
 
   // Group by day
@@ -117,11 +91,11 @@ export default function PlanPage({ user, tripId, membersMap, isAdmin }) {
   const days = Object.keys(grouped).sort()
 
   const calculateDateString = (dayLabel) => {
-    if (!startDate) return ''
+    if (!tripData?.start_date) return ''
     const match = dayLabel.match(/Day\s*(\d+)/i)
     if (match) {
       const dayNum = parseInt(match[1], 10)
-      const d = new Date(startDate)
+      const d = new Date(tripData.start_date)
       d.setDate(d.getDate() + (dayNum - 1))
       return ` (${d.getMonth() + 1}월 ${d.getDate()}일)`
     }
@@ -175,24 +149,7 @@ export default function PlanPage({ user, tripId, membersMap, isAdmin }) {
       )}
 
       {/* Add/Edit Modal */}
-      <AnimatePresence>
-        {showModal && (
-          <motion.div
-            className="modal-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowModal(false)}
-          >
-            <motion.div
-              className="modal-sheet"
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 280, damping: 28 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="modal-handle" />
+      <BottomSheetModal open={showModal} onClose={() => setShowModal(false)}>
               <div className="modal-title">{editItem ? '✏️ 일정 수정' : '➕ 새 일정 추가'}</div>
 
               <form onSubmit={handleSubmit}>
@@ -304,21 +261,19 @@ export default function PlanPage({ user, tripId, membersMap, isAdmin }) {
                   </button>
                 </div>
               </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      </BottomSheetModal>
     </div>
   )
 }
 
 function PlanCard({ plan, expanded, onToggle, onEdit, onDelete, currentUser, membersMap, isAdmin }) {
   const memberInfo = membersMap ? membersMap[plan.user_id] : null
-  const displayAuthor = memberInfo 
-    ? `${memberInfo.name}${memberInfo.is_deleted ? '(탈퇴)' : ''}`
-    : (plan.created_by || '알 수 없음')
-    
-  const canEdit = isAdmin || plan.user_id === currentUser.id || plan.created_by === currentUser.name
+  const displayAuthor = getDisplayName(membersMap, plan.user_id, {
+    fallback: plan.created_by || '알 수 없음',
+    deletedSuffix: '(탈퇴)',
+  })
+
+  const canEdit = canEditItem(isAdmin, plan, currentUser)
 
   return (
     <motion.div

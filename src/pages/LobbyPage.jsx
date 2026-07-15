@@ -123,7 +123,7 @@ export default function LobbyPage({ user, onLogout }) {
       .select('*', { count: 'exact', head: true })
       .eq('trip_id', code)
     
-    const actualCount = count || 1
+    const actualCount = count ?? 1
     const newCount = Math.max(trip.member_count, actualCount)
     
     if (newCount > trip.member_count) {

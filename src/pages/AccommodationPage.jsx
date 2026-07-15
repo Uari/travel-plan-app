@@ -1,14 +1,30 @@
-import React, { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import React, { useState, useMemo } from 'react'
+import { motion } from 'framer-motion'
 import { supabase } from '../lib/supabase.js'
+import { useTripContext } from '../context/TripContext.jsx'
+import { useSupabaseQuery } from '../hooks/useSupabaseQuery.js'
+import { getDisplayName, canEditItem } from '../lib/tripMembers.js'
+import BottomSheetModal from '../components/BottomSheetModal.jsx'
 import './AccommodationPage.css'
 
-export default function AccommodationPage({ user, tripId, membersMap, isAdmin }) {
-  const [accommodations, setAccommodations] = useState([])
-  const [loading, setLoading] = useState(true)
+export default function AccommodationPage() {
+  const { user, tripId, membersMap, isAdmin } = useTripContext()
+  const { data: fetchedAccommodations, loading, refetch: loadAccommodations } = useSupabaseQuery(
+    () => supabase.from('accommodations').select('*').eq('trip_id', tripId).order('created_at', { ascending: true }),
+    [tripId]
+  )
+  // 투표 수 기준으로 정렬 (내림차순), 확정된 숙소가 있다면 맨 위로
+  const accommodations = useMemo(() => {
+    return [...fetchedAccommodations].sort((a, b) => {
+      if (a.is_selected) return -1
+      if (b.is_selected) return 1
+      return (b.votes?.length || 0) - (a.votes?.length || 0)
+    })
+  }, [fetchedAccommodations])
+
   const [showModal, setShowModal] = useState(false)
   const [editId, setEditId] = useState(null)
-  
+
   const [form, setForm] = useState({
     name: '',
     link_url: '',
@@ -18,35 +34,6 @@ export default function AccommodationPage({ user, tripId, membersMap, isAdmin })
   })
   const [selectedFiles, setSelectedFiles] = useState([]) // New files to upload
   const [isUploading, setIsUploading] = useState(false)
-
-  useEffect(() => {
-    if (tripId) {
-      loadAccommodations()
-    }
-  }, [tripId])
-
-  const loadAccommodations = async () => {
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('accommodations')
-      .select('*')
-      .eq('trip_id', tripId)
-      .order('created_at', { ascending: true })
-
-    if (!error && data) {
-      // 투표 수 기준으로 정렬 (내림차순), 확정된 숙소가 있다면 맨 위로
-      const sorted = [...data].sort((a, b) => {
-        if (a.is_selected) return -1
-        if (b.is_selected) return 1
-        return (b.votes?.length || 0) - (a.votes?.length || 0)
-      })
-      setAccommodations(sorted)
-    } else {
-      console.error("Accommodation fetch error:", error)
-      setAccommodations([])
-    }
-    setLoading(false)
-  }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -103,67 +90,70 @@ export default function AccommodationPage({ user, tripId, membersMap, isAdmin })
     if (!form.name.trim()) return
 
     setIsUploading(true)
-    let finalImgUrls = [...form.img_urls]
+    try {
+      let finalImgUrls = [...form.img_urls]
 
-    if (selectedFiles.length > 0) {
-      const uploadPromises = selectedFiles.map(async (file) => {
-        const fileExt = file.name.split('.').pop()
-        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`
-        const filePath = `images/${fileName}`
+      if (selectedFiles.length > 0) {
+        const uploadPromises = selectedFiles.map(async (file) => {
+          const fileExt = file.name.split('.').pop()
+          const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`
+          const filePath = `images/${fileName}`
 
-        const { error } = await supabase.storage.from('travel_images').upload(filePath, file)
-        if (error) throw error
+          const { error } = await supabase.storage.from('travel_images').upload(filePath, file)
+          if (error) throw error
 
-        const { data } = supabase.storage.from('travel_images').getPublicUrl(filePath)
-        return data.publicUrl
-      })
+          const { data } = supabase.storage.from('travel_images').getPublicUrl(filePath)
+          return data.publicUrl
+        })
 
-      const results = await Promise.allSettled(uploadPromises)
-      
-      const successfulUrls = results
-        .filter(r => r.status === 'fulfilled')
-        .map(r => r.value)
-      
-      if (successfulUrls.length < selectedFiles.length) {
-        alert('일부 이미지 업로드에 실패했습니다. 성공한 이미지만 저장됩니다.')
+        const results = await Promise.allSettled(uploadPromises)
+
+        const successfulUrls = results
+          .filter(r => r.status === 'fulfilled')
+          .map(r => r.value)
+
+        if (successfulUrls.length < selectedFiles.length) {
+          alert('일부 이미지 업로드에 실패했습니다. 성공한 이미지만 저장됩니다.')
+        }
+
+        finalImgUrls = [...finalImgUrls, ...successfulUrls]
       }
 
-      finalImgUrls = [...finalImgUrls, ...successfulUrls]
-    }
-
-    const payload = {
-      name: form.name.trim(),
-      link_url: form.link_url.trim() || null,
-      img_urls: finalImgUrls,
-      price: Number(form.price) || 0,
-      pros_cons: form.pros_cons.trim() || null,
-      trip_id: tripId,
-      created_by: user.name, // For backward compatibility
-      user_id: user.id
-    }
-
-    // For backwards compatibility, update img_url to the first image if any
-    if (finalImgUrls.length > 0) {
-      payload.img_url = finalImgUrls[0]
-    } else {
-      payload.img_url = null
-    }
-
-    if (editId) {
-      const { error } = await supabase.from('accommodations').update(payload).eq('id', editId)
-      if (!error) {
-        setShowModal(false)
-        setEditId(null)
-        loadAccommodations()
+      const payload = {
+        name: form.name.trim(),
+        link_url: form.link_url.trim() || null,
+        img_urls: finalImgUrls,
+        price: Number(form.price) || 0,
+        pros_cons: form.pros_cons.trim() || null,
+        trip_id: tripId,
+        created_by: user.name, // For backward compatibility
+        user_id: user.id
       }
-    } else {
-      const { error } = await supabase.from('accommodations').insert(payload)
-      if (!error) {
-        setShowModal(false)
-        loadAccommodations()
+
+      // For backwards compatibility, update img_url to the first image if any
+      if (finalImgUrls.length > 0) {
+        payload.img_url = finalImgUrls[0]
+      } else {
+        payload.img_url = null
       }
+
+      if (editId) {
+        const { error } = await supabase.from('accommodations').update(payload).eq('id', editId)
+        if (!error) {
+          setShowModal(false)
+          setEditId(null)
+          loadAccommodations()
+        }
+      } else {
+        const { error } = await supabase.from('accommodations').insert(payload)
+        if (!error) {
+          setShowModal(false)
+          loadAccommodations()
+        }
+      }
+    } finally {
+      setIsUploading(false)
     }
-    setIsUploading(false)
   }
 
   const handleDelete = async (id) => {
@@ -230,11 +220,9 @@ export default function AccommodationPage({ user, tripId, membersMap, isAdmin })
           accommodations.map((acc) => {
             const images = acc.img_urls && acc.img_urls.length > 0 ? acc.img_urls : (acc.img_url ? [acc.img_url] : [])
             const memberInfo = membersMap[acc.user_id]
-            const displayAuthor = memberInfo 
-              ? `${memberInfo.name}${memberInfo.is_deleted ? ' (탈퇴함)' : ''}`
-              : (acc.created_by || '알 수 없음')
-              
-            const canEditDelete = isAdmin || acc.user_id === user.id || acc.created_by === user.name
+            const displayAuthor = getDisplayName(membersMap, acc.user_id, { fallback: acc.created_by || '알 수 없음' })
+
+            const canEditDelete = canEditItem(isAdmin, acc, user)
             const hasMyVote = acc.votes?.includes(user.id) || acc.votes?.includes(user.name)
 
             return (
@@ -325,24 +313,7 @@ export default function AccommodationPage({ user, tripId, membersMap, isAdmin })
       </button>
 
       {/* Add Modal */}
-      <AnimatePresence>
-        {showModal && (
-          <motion.div
-            className="modal-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowModal(false)}
-          >
-            <motion.div
-              className="modal-sheet"
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="modal-handle" />
+      <BottomSheetModal open={showModal} onClose={() => setShowModal(false)}>
               <h3 className="modal-title">✨ 숙소 후보 {editId ? '수정' : '등록'}</h3>
               <form onSubmit={handleAddOrEdit} className="acc-form">
                 <div className="input-group">
@@ -425,10 +396,7 @@ export default function AccommodationPage({ user, tripId, membersMap, isAdmin })
                   </button>
                 </div>
               </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      </BottomSheetModal>
     </div>
   )
 }

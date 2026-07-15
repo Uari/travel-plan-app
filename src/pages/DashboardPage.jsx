@@ -10,9 +10,12 @@ import confetti from "canvas-confetti";
 import { KOREA_REGIONS } from "../data/regions.js";
 import KoreaMapSVG from "../components/KoreaMapSVG.jsx";
 import { supabase } from "../lib/supabase.js";
+import { useTripContext } from "../context/TripContext.jsx";
+import BottomSheetModal from "../components/BottomSheetModal.jsx";
 import "./DashboardPage.css";
 
-export default function DashboardPage({ user, tripId }) {
+export default function DashboardPage() {
+  const { user, tripId, tripData, setTripData } = useTripContext();
   const [excludedRegions, setExcludedRegions] = useState(() => {
     const saved = localStorage.getItem("travelplan_excluded");
     return saved ? JSON.parse(saved) : [];
@@ -22,9 +25,8 @@ export default function DashboardPage({ user, tripId }) {
   const [dartState, setDartState] = useState("idle"); // idle | flying | landed
   const [isDragging, setIsDragging] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
-  
+
   // Trip Date management
-  const [tripInfo, setTripInfo] = useState(null);
   const [showDateModal, setShowDateModal] = useState(false);
   const [tempDate, setTempDate] = useState("");
 
@@ -38,30 +40,29 @@ export default function DashboardPage({ user, tripId }) {
     return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    if (tripId) {
-      loadTripInfo();
-    }
-  }, [tripId]);
-
-  const loadTripInfo = async () => {
-    const { data } = await supabase.from('trips').select('*').eq('id', tripId).single();
-    if (data) setTripInfo(data);
-  };
-
   const handleUpdateDate = async (e) => {
     e.preventDefault();
     const newDate = tempDate || null;
-    await supabase.from('trips').update({ start_date: newDate }).eq('id', tripId);
-    setTripInfo(prev => ({ ...prev, start_date: newDate }));
+    const { error } = await supabase.from('trips').update({ start_date: newDate }).eq('id', tripId);
+    if (error) {
+      console.error(error);
+      alert('여행 시작일 변경에 실패했습니다. 다시 시도해주세요.');
+      return;
+    }
+    setTripData(prev => ({ ...prev, start_date: newDate }));
     setShowDateModal(false);
   };
 
   const handleUpdateName = async (e) => {
     e.preventDefault();
     if (!tempName.trim()) return;
-    await supabase.from('trips').update({ name: tempName.trim() }).eq('id', tripId);
-    setTripInfo(prev => ({ ...prev, name: tempName.trim() }));
+    const { error } = await supabase.from('trips').update({ name: tempName.trim() }).eq('id', tripId);
+    if (error) {
+      console.error(error);
+      alert('여행 방 이름 변경에 실패했습니다. 다시 시도해주세요.');
+      return;
+    }
+    setTripData(prev => ({ ...prev, name: tempName.trim() }));
     setShowNameModal(false);
   };
 
@@ -160,13 +161,13 @@ export default function DashboardPage({ user, tripId }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <div className="dashboard-greeting" style={{ fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              {tripInfo ? <strong>{tripInfo.name}</strong> : '여행 준비 중...'}
-              {tripInfo && (
+              {tripData ? <strong>{tripData.name}</strong> : '여행 준비 중...'}
+              {tripData && (
                 <button
                   className="btn btn-secondary btn-sm"
                   style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem' }}
                   onClick={() => {
-                    setTempName(tripInfo.name || '');
+                    setTempName(tripData.name || '');
                     setShowNameModal(true);
                   }}
                   title="방 이름 변경"
@@ -195,15 +196,15 @@ export default function DashboardPage({ user, tripId }) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '0.75rem 1rem', borderRadius: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
             <span>📅 여행 시작일:</span>
-            <strong style={{ color: tripInfo?.start_date ? 'var(--primary-color)' : 'var(--text-muted)' }}>
-              {tripInfo?.start_date ? tripInfo.start_date : '미정 (클릭해서 설정)'}
+            <strong style={{ color: tripData?.start_date ? 'var(--primary-color)' : 'var(--text-muted)' }}>
+              {tripData?.start_date ? tripData.start_date : '미정 (클릭해서 설정)'}
             </strong>
           </div>
-          <button 
-            className="btn btn-secondary btn-sm" 
+          <button
+            className="btn btn-secondary btn-sm"
             style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
             onClick={() => {
-              setTempDate(tripInfo?.start_date || '');
+              setTempDate(tripData?.start_date || '');
               setShowDateModal(true);
             }}
           >
@@ -332,24 +333,7 @@ export default function DashboardPage({ user, tripId }) {
       </div>
 
       {/* Date Editor Modal */}
-      <AnimatePresence>
-        {showDateModal && (
-          <motion.div
-            className="modal-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowDateModal(false)}
-          >
-            <motion.div
-              className="modal-sheet"
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", stiffness: 280, damping: 28 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="modal-handle" />
+      <BottomSheetModal open={showDateModal} onClose={() => setShowDateModal(false)}>
               <div className="modal-title">📅 여행 시작일 설정</div>
               <form onSubmit={handleUpdateDate}>
                 <div className="input-group">
@@ -367,30 +351,10 @@ export default function DashboardPage({ user, tripId }) {
                   <button type="submit" className="btn btn-primary" style={{ flex: 2 }}>적용하기</button>
                 </div>
               </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      </BottomSheetModal>
 
       {/* Name Editor Modal */}
-      <AnimatePresence>
-        {showNameModal && (
-          <motion.div
-            className="modal-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowNameModal(false)}
-          >
-            <motion.div
-              className="modal-sheet"
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", stiffness: 280, damping: 28 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="modal-handle" />
+      <BottomSheetModal open={showNameModal} onClose={() => setShowNameModal(false)}>
               <div className="modal-title">🏷️ 여행 방 이름 변경</div>
               <form onSubmit={handleUpdateName}>
                 <div className="input-group">
@@ -409,30 +373,10 @@ export default function DashboardPage({ user, tripId }) {
                   <button type="submit" className="btn btn-primary" style={{ flex: 2 }}>변경하기</button>
                 </div>
               </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      </BottomSheetModal>
 
       {/* Exclude Panel Modal */}
-      <AnimatePresence>
-        {showExcludePanel && (
-          <motion.div
-            className="modal-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowExcludePanel(false)}
-          >
-            <motion.div
-              className="modal-sheet"
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", stiffness: 280, damping: 28 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="modal-handle" />
+      <BottomSheetModal open={showExcludePanel} onClose={() => setShowExcludePanel(false)}>
               <div className="modal-title">🚫 제외할 지역 선택</div>
               <p
                 className="text-sm text-muted"
@@ -474,10 +418,7 @@ export default function DashboardPage({ user, tripId }) {
               >
                 완료 ({availableRegions.length}곳 후보)
               </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      </BottomSheetModal>
     </div>
   );
 }

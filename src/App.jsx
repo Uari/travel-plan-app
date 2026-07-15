@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Routes, Route, Navigate, useNavigate, useLocation, useParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from './lib/supabase.js'
+import { TripContext } from './context/TripContext.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import LobbyPage from './pages/LobbyPage.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
@@ -57,7 +58,6 @@ export default function App() {
 
   const handleLogout = () => {
     localStorage.removeItem('travelplan_session')
-    localStorage.removeItem('travelplan_user')
     setUser(null)
     navigate('/lobby', { replace: true })
   }
@@ -88,18 +88,27 @@ function TripLayout({ user, onLogout }) {
   const [isAdmin, setIsAdmin] = useState(false)
   const [tripData, setTripData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(null)
 
   useEffect(() => {
     const fetchTripContext = async () => {
       setLoading(true)
-      
+      setLoadError(null)
+
       // 1. Fetch trip and admin
-      const { data: trip } = await supabase
+      const { data: trip, error: tripError } = await supabase
         .from('trips')
         .select('*')
         .eq('id', tripId)
         .single()
-        
+
+      if (tripError) {
+        console.error(tripError)
+        setLoadError('여행 정보를 불러오지 못했습니다. 다시 시도해주세요.')
+        setLoading(false)
+        return
+      }
+
       if (trip) {
         setTripData(trip)
         setIsAdmin(trip.admin_id === user.id)
@@ -111,6 +120,10 @@ function TripLayout({ user, onLogout }) {
         .from('trip_members')
         .select('user_id')
         .eq('trip_id', tripId)
+
+      if (error) {
+        console.error(error)
+      }
 
       if (!error && members && members.length > 0) {
         const userIds = members.map(m => m.user_id).filter(Boolean)
@@ -147,7 +160,19 @@ function TripLayout({ user, onLogout }) {
     return <div className="app-shell" style={{justifyContent:'center', alignItems:'center'}}>로딩 중...</div>
   }
 
+  if (loadError) {
+    return (
+      <div className="app-shell" style={{justifyContent:'center', alignItems:'center', gap: '1rem', textAlign: 'center', padding: '1.5rem'}}>
+        <p>⚠️ {loadError}</p>
+        <button className="btn btn-secondary" onClick={() => navigate('/lobby')}>로비로 돌아가기</button>
+      </div>
+    )
+  }
+
+  const tripContextValue = { user, tripId, membersMap, isAdmin, tripData, setTripData }
+
   return (
+    <TripContext.Provider value={tripContextValue}>
     <div className="app-shell">
       {/* Top bar */}
       <header className="top-bar">
@@ -185,27 +210,27 @@ function TripLayout({ user, onLogout }) {
           <Routes location={location} key={location.pathname}>
             <Route path="dashboard" element={
               <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2 }} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                <DashboardPage user={user} tripId={tripId} membersMap={membersMap} />
+                <DashboardPage />
               </motion.div>
             } />
             <Route path="plan" element={
               <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2 }} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                <PlanPage user={user} tripId={tripId} membersMap={membersMap} isAdmin={isAdmin} />
+                <PlanPage />
               </motion.div>
             } />
             <Route path="accommodation" element={
               <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2 }} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                <AccommodationPage user={user} tripId={tripId} membersMap={membersMap} isAdmin={isAdmin} />
+                <AccommodationPage />
               </motion.div>
             } />
             <Route path="expense" element={
               <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2 }} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                <ExpensePage user={user} tripId={tripId} membersMap={membersMap} isAdmin={isAdmin} />
+                <ExpensePage />
               </motion.div>
             } />
             <Route path="checklist" element={
               <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2 }} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                <ChecklistPage user={user} tripId={tripId} membersMap={membersMap} isAdmin={isAdmin} />
+                <ChecklistPage />
               </motion.div>
             } />
             <Route path="*" element={<Navigate to="dashboard" replace />} />
@@ -239,6 +264,7 @@ function TripLayout({ user, onLogout }) {
         })}
       </nav>
     </div>
+    </TripContext.Provider>
   )
 }
 

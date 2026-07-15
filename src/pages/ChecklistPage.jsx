@@ -1,47 +1,45 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase.js'
+import { useTripContext } from '../context/TripContext.jsx'
+import { useSupabaseQuery } from '../hooks/useSupabaseQuery.js'
+import { getDisplayName } from '../lib/tripMembers.js'
+import BottomSheetModal from '../components/BottomSheetModal.jsx'
 import './ChecklistPage.css'
 
 const QUICK_ITEMS = ['👕 여벌 옷', '🔌 충전기', '💊 상비약', '🪥 세면도구', '📸 카메라', '☂️ 우산', '🏧 현금 환전', '🗺️ 지도 저장']
 
-export default function ChecklistPage({ user, tripId, membersMap, isAdmin }) {
-  const [items, setItems] = useState([])
-  const [loading, setLoading] = useState(true)
-  
+export default function ChecklistPage() {
+  const { user, tripId, membersMap, isAdmin } = useTripContext()
+  const { data: items, loading, refetch: loadItems } = useSupabaseQuery(
+    () => supabase.from('checklist').select('*').eq('trip_id', tripId).order('created_at'),
+    [tripId]
+  )
+
   // Trip members for assignment (Array of IDs)
   const [members, setMembers] = useState([])
-  
+
   // Modal states
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({ item: '', assigned_to: [user.id] })
   const [editId, setEditId] = useState(null)
 
   useEffect(() => {
-    if (tripId) {
-      loadMembers()
-      loadItems()
-    }
+    loadMembers()
   }, [tripId])
 
   const loadMembers = async () => {
-    const { data } = await supabase.from('trip_members').select('user_id').eq('trip_id', tripId)
+    const { data, error } = await supabase.from('trip_members').select('user_id').eq('trip_id', tripId)
+    if (error) {
+      console.error(error)
+      setMembers([user.id])
+      return
+    }
     if (data) {
       setMembers(data.map(d => d.user_id))
     } else {
       setMembers([user.id])
     }
-  }
-
-  const loadItems = async () => {
-    setLoading(true)
-    const { data, error } = await supabase.from('checklist').select('*').eq('trip_id', tripId).order('created_at')
-    if (!error && data) {
-      setItems(data)
-    } else {
-      setItems([])
-    }
-    setLoading(false)
   }
 
   const openAddModal = (text = '') => {
@@ -261,24 +259,7 @@ export default function ChecklistPage({ user, tripId, membersMap, isAdmin }) {
       )}
 
       {/* Add/Edit Modal */}
-      <AnimatePresence>
-        {showModal && (
-          <motion.div
-            className="modal-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowModal(false)}
-          >
-            <motion.div
-              className="modal-sheet"
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 280, damping: 28 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="modal-handle" />
+      <BottomSheetModal open={showModal} onClose={() => setShowModal(false)}>
               <div className="modal-title">{editId ? '✏️ 준비물 수정' : '➕ 준비물 추가'}</div>
 
               <form onSubmit={handleSubmit}>
@@ -299,7 +280,7 @@ export default function ChecklistPage({ user, tripId, membersMap, isAdmin }) {
                     {members.map(memberId => {
                       const isAssigned = form.assigned_to.includes(memberId)
                       const memberInfo = membersMap[memberId]
-                      const displayName = memberInfo ? `${memberInfo.name}${memberInfo.is_deleted ? ' (탈퇴함)' : ''}` : memberId
+                      const displayName = getDisplayName(membersMap, memberId, { fallback: memberId })
 
                       return (
                         <button
@@ -331,10 +312,7 @@ export default function ChecklistPage({ user, tripId, membersMap, isAdmin }) {
                   </button>
                 </div>
               </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      </BottomSheetModal>
     </div>
   )
 }
@@ -382,7 +360,7 @@ function CheckItem({ item, currentUser, membersMap, isAdmin, onToggle, onEdit, o
             {assigned.map(a => {
               const hasChecked = completed.includes(a)
               const memberInfo = membersMap ? membersMap[a] : null
-              const displayName = memberInfo ? `${memberInfo.name}${memberInfo.is_deleted ? '(탈퇴)' : ''}` : a
+              const displayName = getDisplayName(membersMap, a, { fallback: a, deletedSuffix: '(탈퇴)' })
 
               return (
                 <span key={a} style={{ 
