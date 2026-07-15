@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 .env
+
+# Supabase CLI local metadata (project link info, etc.)
+supabase/.temp
