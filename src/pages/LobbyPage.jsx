@@ -18,7 +18,14 @@ export default function LobbyPage({ user, onLogout }) {
   const [joinCode, setJoinCode] = useState('')
   const [joinError, setJoinError] = useState('')
 
+  // 진행 중 / 완료 탭
+  const [activeTab, setActiveTab] = useState('ongoing') // 'ongoing' | 'completed'
+
   const navigate = useNavigate()
+
+  const ongoingTrips = trips.filter((t) => !t.is_completed)
+  const completedTrips = trips.filter((t) => t.is_completed)
+  const shownTrips = activeTab === 'completed' ? completedTrips : ongoingTrips
 
   useEffect(() => {
     fetchMyTrips()
@@ -190,8 +197,22 @@ export default function LobbyPage({ user, onLogout }) {
       </header>
 
       <main className="lobby-main">
+        {/* 여행 로그 (로비 메인) */}
+        <motion.button
+          className="travellog-hero"
+          whileTap={{ scale: 0.98 }}
+          onClick={() => navigate('/travel-log')}
+        >
+          <div className="travellog-hero-icon">📖</div>
+          <div className="travellog-hero-text">
+            <strong>여행 로그</strong>
+            <span>다녀온 여행을 지도에서 다시 만나보세요</span>
+          </div>
+          <div className="travellog-hero-arrow">→</div>
+        </motion.button>
+
         <div className="lobby-actions">
-          <motion.button 
+          <motion.button
             className="btn btn-primary lobby-action-btn"
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowCreateModal(true)}
@@ -205,26 +226,39 @@ export default function LobbyPage({ user, onLogout }) {
           >
             <span>🤝</span> 초대 코드로 입장
           </motion.button>
-          <motion.button
-            className="btn btn-secondary lobby-action-btn"
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate('/travel-log')}
-          >
-            <span>📖</span> 여행 로그
-          </motion.button>
         </div>
 
         <div className="lobby-trip-list">
           <h2>나의 여행 방</h2>
+
+          <div className="lobby-tabs">
+            <button
+              className={`lobby-tab${activeTab === 'ongoing' ? ' active' : ''}`}
+              onClick={() => setActiveTab('ongoing')}
+            >
+              진행 중 ({ongoingTrips.length})
+            </button>
+            <button
+              className={`lobby-tab${activeTab === 'completed' ? ' active' : ''}`}
+              onClick={() => setActiveTab('completed')}
+            >
+              여행 완료 ({completedTrips.length})
+            </button>
+          </div>
+
           {loading ? (
             <p className="loading-text">방 목록을 불러오는 중...</p>
-          ) : trips.length === 0 ? (
+          ) : shownTrips.length === 0 ? (
             <div className="empty-state">
-              아직 참여 중인 여행 방이 없습니다.<br/>새로운 방을 만들거나 코드로 입장해보세요!
+              {activeTab === 'completed' ? (
+                '아직 완료된 여행이 없습니다.'
+              ) : (
+                <>아직 진행 중인 여행 방이 없습니다.<br/>새로운 방을 만들거나 코드로 입장해보세요!</>
+              )}
             </div>
           ) : (
             <div className="trip-cards">
-              {trips.map(trip => (
+              {shownTrips.map(trip => (
                 <motion.div 
                   key={trip.id} 
                   className="trip-card"
@@ -233,27 +267,29 @@ export default function LobbyPage({ user, onLogout }) {
                   whileTap={{ scale: 0.98 }}
                   onClick={() => navigate(`/trip/${trip.id}/dashboard`)}
                 >
-                  <button
-                    className="leave-trip-btn"
-                    onClick={(e) => handleLeaveTrip(e, trip.id, trip.member_count)}
-                    style={{
-                      position: 'absolute',
-                      top: '12px',
-                      right: '12px',
-                      background: 'rgba(239, 68, 68, 0.1)',
-                      color: '#ef4444',
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '4px 8px',
-                      fontSize: '0.75rem',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      zIndex: 10
-                    }}
-                    title="방 나가기"
-                  >
-                    나가기
-                  </button>
+                  {!trip.is_completed && (
+                    <button
+                      className="leave-trip-btn"
+                      onClick={(e) => handleLeaveTrip(e, trip.id, trip.member_count)}
+                      style={{
+                        position: 'absolute',
+                        top: '12px',
+                        right: '12px',
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        color: '#ef4444',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '4px 8px',
+                        fontSize: '0.75rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        zIndex: 10
+                      }}
+                      title="방 나가기"
+                    >
+                      나가기
+                    </button>
+                  )}
                   <h3>
                     {trip.name}
                     {trip.is_completed && (
