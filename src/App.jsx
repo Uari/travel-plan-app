@@ -27,7 +27,7 @@ export default function App() {
   const navigate = useNavigate()
   
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('travelplan_theme') || 'dark'
+    return localStorage.getItem('travelplan_theme') || 'light'
   })
 
   useEffect(() => {
