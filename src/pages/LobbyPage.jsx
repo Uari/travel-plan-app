@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
+import TripCompleteModal from '../components/TripCompleteModal.jsx'
 import './LobbyPage.css' // We will create this or use inline styles, let's create a minimal CSS
 
 export default function LobbyPage({ user, onLogout }) {
@@ -21,6 +22,10 @@ export default function LobbyPage({ user, onLogout }) {
   // 진행 중 / 완료 탭
   const [activeTab, setActiveTab] = useState('ongoing') // 'ongoing' | 'completed'
 
+  // 여행 완료 모달
+  const [completeTargetId, setCompleteTargetId] = useState(null)
+  const [completing, setCompleting] = useState(false)
+
   const navigate = useNavigate()
 
   const ongoingTrips = trips.filter((t) => !t.is_completed)
@@ -39,24 +44,28 @@ export default function LobbyPage({ user, onLogout }) {
       .select(`
         trip_id,
         joined_at,
+        is_admin,
         trips (
           id,
           name,
           start_date,
           member_count,
-          is_completed
+          is_completed,
+          admin_id
         )
       `)
       .eq('user_id', user.id)
       .order('joined_at', { ascending: false })
 
     if (!error && data) {
-      // data format: [{ trip_id, trips: { id, name, ... } }, ...]
+      // data format: [{ trip_id, is_admin, trips: { id, name, ... } }, ...]
       const formattedTrips = data
         .filter(item => item.trips) // filter out nulls if trip was deleted
         .map(item => ({
           ...item.trips,
-          joined_at: item.joined_at
+          joined_at: item.joined_at,
+          // 방장 여부: 내 membership의 is_admin 우선, 백필 전 데이터는 admin_id로 폴백
+          am_admin: item.is_admin === true || item.trips.admin_id === user.id,
         }))
       setTrips(formattedTrips)
     }
@@ -177,6 +186,39 @@ export default function LobbyPage({ user, onLogout }) {
     }
 
     // Refresh list
+    fetchMyTrips()
+  }
+
+  const handleCompleteTrip = async (payload) => {
+    if (!completeTargetId) return
+    setCompleting(true)
+    const { error } = await supabase
+      .from('trips')
+      .update({ ...payload, is_completed: true, completed_at: new Date().toISOString() })
+      .eq('id', completeTargetId)
+    setCompleting(false)
+    if (error) {
+      console.error(error)
+      alert('여행 완료 처리에 실패했습니다. 다시 시도해주세요.')
+      return
+    }
+    setCompleteTargetId(null)
+    setActiveTab('completed')
+    fetchMyTrips()
+  }
+
+  const handleUncompleteTrip = async (e, tripId) => {
+    e.stopPropagation()
+    if (!window.confirm('여행 완료를 취소할까요? 여행 로그에서 제외되지만, 올린 사진과 후기는 그대로 유지됩니다.')) return
+    const { error } = await supabase
+      .from('trips')
+      .update({ is_completed: false, completed_at: null })
+      .eq('id', tripId)
+    if (error) {
+      console.error(error)
+      alert('완료 취소에 실패했습니다. 다시 시도해주세요.')
+      return
+    }
     fetchMyTrips()
   }
 
@@ -310,12 +352,43 @@ export default function LobbyPage({ user, onLogout }) {
                     {trip.start_date && <span className="trip-date">📅 {trip.start_date}</span>}
                     <span className="trip-members">👥 {trip.member_count}명</span>
                   </div>
+
+                  {trip.am_admin && (
+                    <div className="trip-card-actions">
+                      {trip.is_completed ? (
+                        <button
+                          className="trip-complete-btn uncomplete"
+                          onClick={(e) => handleUncompleteTrip(e, trip.id)}
+                        >
+                          완료 취소
+                        </button>
+                      ) : (
+                        <button
+                          className="trip-complete-btn"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setCompleteTargetId(trip.id)
+                          }}
+                        >
+                          ✅ 여행 완료
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </div>
           )}
         </div>
       </main>
+
+      {/* 여행 완료 모달 */}
+      <TripCompleteModal
+        open={!!completeTargetId}
+        onClose={() => setCompleteTargetId(null)}
+        onComplete={handleCompleteTrip}
+        submitting={completing}
+      />
 
       {/* Create Modal */}
       <AnimatePresence>

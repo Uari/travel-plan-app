@@ -12,11 +12,10 @@ import KoreaMapSVG from "../components/KoreaMapSVG.jsx";
 import { supabase } from "../lib/supabase.js";
 import { useTripContext } from "../context/TripContext.jsx";
 import BottomSheetModal from "../components/BottomSheetModal.jsx";
-import TripCompleteModal from "../components/TripCompleteModal.jsx";
 import "./DashboardPage.css";
 
 export default function DashboardPage() {
-  const { user, tripId, tripData, setTripData, isAdmin } = useTripContext();
+  const { user, tripId, tripData, setTripData } = useTripContext();
   const [excludedRegions, setExcludedRegions] = useState(() => {
     const saved = localStorage.getItem("travelplan_excluded");
     return saved ? JSON.parse(saved) : [];
@@ -34,40 +33,6 @@ export default function DashboardPage() {
   // Trip Name management
   const [showNameModal, setShowNameModal] = useState(false);
   const [tempName, setTempName] = useState("");
-
-  // Trip Complete management
-  const [showCompleteModal, setShowCompleteModal] = useState(false);
-  const [completing, setCompleting] = useState(false);
-
-  const handleCompleteTrip = async (payload) => {
-    setCompleting(true);
-    const { error } = await supabase
-      .from('trips')
-      .update({ ...payload, is_completed: true, completed_at: new Date().toISOString() })
-      .eq('id', tripId);
-    setCompleting(false);
-    if (error) {
-      console.error(error);
-      alert('여행 완료 처리에 실패했습니다. 다시 시도해주세요.');
-      return;
-    }
-    setTripData((prev) => (prev ? { ...prev, ...payload, is_completed: true } : prev));
-    setShowCompleteModal(false);
-  };
-
-  const handleUncompleteTrip = async () => {
-    if (!window.confirm('여행 완료를 취소할까요? 여행 로그에서 제외되지만, 올린 사진과 후기는 그대로 유지됩니다.')) return;
-    const { error } = await supabase
-      .from('trips')
-      .update({ is_completed: false, completed_at: null })
-      .eq('id', tripId);
-    if (error) {
-      console.error(error);
-      alert('완료 취소에 실패했습니다. 다시 시도해주세요.');
-      return;
-    }
-    setTripData((prev) => (prev ? { ...prev, is_completed: false } : prev));
-  };
 
   useEffect(() => {
     // Defer map rendering to prevent stuttering during page transition
@@ -225,25 +190,6 @@ export default function DashboardPage() {
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
               안녕하세요, <strong>{user.name}</strong> 님! 👋
             </p>
-            {isAdmin && tripData && (
-              tripData.is_completed ? (
-                <button
-                  className="btn btn-secondary btn-sm"
-                  style={{ marginTop: '0.5rem', fontSize: '0.72rem', padding: '0.25rem 0.6rem' }}
-                  onClick={handleUncompleteTrip}
-                >
-                  완료 취소
-                </button>
-              ) : (
-                <button
-                  className="btn btn-primary btn-sm"
-                  style={{ marginTop: '0.5rem', fontSize: '0.72rem', padding: '0.25rem 0.6rem' }}
-                  onClick={() => setShowCompleteModal(true)}
-                >
-                  ✅ 여행 완료
-                </button>
-              )
-            )}
           </div>
           <button
             id="exclude-filter-btn"
@@ -396,14 +342,6 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
-
-      {/* Trip Complete Modal */}
-      <TripCompleteModal
-        open={showCompleteModal}
-        onClose={() => setShowCompleteModal(false)}
-        onComplete={handleCompleteTrip}
-        submitting={completing}
-      />
 
       {/* Date Editor Modal */}
       <BottomSheetModal open={showDateModal} onClose={() => setShowDateModal(false)}>

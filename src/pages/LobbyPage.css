@@ -189,3 +189,26 @@
   border-color: var(--accent-primary, #6366f1);
   color: #fff;
 }
+
+/* 여행 카드 완료/취소 버튼 */
+.trip-card-actions {
+  margin-top: 0.75rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.trip-complete-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--accent-primary, #6366f1);
+  color: #fff;
+}
+
+.trip-complete-btn.uncomplete {
+  background: rgba(127, 127, 127, 0.15);
+  color: var(--text-muted);
+}
