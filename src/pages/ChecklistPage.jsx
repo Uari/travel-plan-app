@@ -347,7 +347,7 @@ function CheckItem({ item, currentUser, membersMap, isAdmin, onToggle, onEdit, o
       exit={{ opacity: 0, x: 12, height: 0, marginBottom: 0 }}
       transition={{ duration: 0.2 }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', flex: 1, cursor: canToggle ? 'pointer' : 'default' }} onClick={canToggle ? onToggle : undefined}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, cursor: canToggle ? 'pointer' : 'default' }} onClick={canToggle ? onToggle : undefined}>
         <button
           className={`check-box${didICheck || item.is_done ? ' checked' : ''}`}
           style={{ opacity: canToggle ? 1 : (didICheck || item.is_done ? 0.7 : 0.4) }}
