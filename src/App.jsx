@@ -208,7 +208,7 @@ function TripLayout({ user, onLogout }) {
             👤{user.name.slice(0,3)}
           </button>
           <button id="logout-btn" className="logout-btn" onClick={onLogout} title="로그아웃" style={{ padding: '0.2rem 0.4rem', fontSize: '0.7rem' }}>
-            나가기
+            로그아웃
           </button>
         </div>
       </header>

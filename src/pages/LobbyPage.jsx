@@ -234,7 +234,7 @@ export default function LobbyPage({ user, onLogout }) {
           <button className="mypage-btn" onClick={() => navigate('/mypage')} style={{color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600}}>
             👤 {user.name}
           </button>
-          <button className="logout-btn" onClick={onLogout}>나가기</button>
+          <button className="logout-btn" onClick={onLogout}>로그아웃</button>
         </div>
       </header>
 
