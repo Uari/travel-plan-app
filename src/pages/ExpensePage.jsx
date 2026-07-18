@@ -5,6 +5,7 @@ import { useTripContext } from '../context/TripContext.jsx'
 import { useSupabaseQuery } from '../hooks/useSupabaseQuery.js'
 import { getDisplayName, canEditItem } from '../lib/tripMembers.js'
 import BottomSheetModal from '../components/BottomSheetModal.jsx'
+import ScrollToTopButton from '../components/ScrollToTopButton.jsx'
 import './ExpensePage.css'
 
 const CATEGORIES = [
@@ -96,6 +97,7 @@ export default function ExpensePage() {
 
   return (
     <div className="expense-page">
+      <ScrollToTopButton />
       <div className="expense-header">
         <h2 className="page-title" style={{ marginBottom: 0 }}>비용 정산 💸</h2>
         {!isCompleted && (
@@ -205,7 +207,7 @@ export default function ExpensePage() {
                   <div>
                     <div className="expense-label" style={{ opacity: memberInfo?.is_deleted ? 0.6 : 1 }}>{expense.label}</div>
                     <div className="expense-meta">
-                      <span style={{ color: memberInfo?.is_deleted ? '#ef4444' : 'inherit' }}>{displayAuthor}</span>
+                      <span style={{ color: memberInfo?.is_deleted ? 'var(--accent-rose)' : 'inherit' }}>{displayAuthor}</span>
                       <span>·</span>
                       <span style={{ color: cat.color }}>{cat.label.split(' ')[1]}</span>
                     </div>

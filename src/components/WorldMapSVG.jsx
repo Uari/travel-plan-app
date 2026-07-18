@@ -43,17 +43,17 @@ export default function WorldMapSVG({ visited = {}, onSelectCountry }) {
               cy={cy}
               r="6"
               fill="none"
-              stroke="var(--accent-primary, #6366f1)"
+              stroke="var(--accent-primary, #4a6b52)"
               strokeWidth="1.5"
               initial={{ r: 6, opacity: 0.9 }}
               animate={{ r: 16, opacity: 0 }}
               transition={{ duration: 1.6, repeat: Infinity, ease: 'easeOut', delay: idx * 0.15 }}
             />
-            <circle cx={cx} cy={cy} r="6.5" fill="#4f46e5" />
+            <circle cx={cx} cy={cy} r="6.5" fill="#c1723f" />
             <circle cx={cx} cy={cy} r="2.5" fill="#fff" />
             {count > 1 && (
               <>
-                <circle cx={cx + 6} cy={cy - 6} r="5.5" fill="var(--accent-rose, #f43f5e)" />
+                <circle cx={cx + 6} cy={cy - 6} r="5.5" fill="var(--accent-rose, #c05a4e)" />
                 <text x={cx + 6} y={cy - 6 + 2.6} fontSize="6.5" fontWeight="800" fill="#fff" textAnchor="middle">
                   {count > 9 ? '9+' : count}
                 </text>

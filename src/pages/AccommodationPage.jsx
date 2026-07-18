@@ -5,6 +5,7 @@ import { useTripContext } from '../context/TripContext.jsx'
 import { useSupabaseQuery } from '../hooks/useSupabaseQuery.js'
 import { getDisplayName, canEditItem } from '../lib/tripMembers.js'
 import BottomSheetModal from '../components/BottomSheetModal.jsx'
+import ScrollToTopButton from '../components/ScrollToTopButton.jsx'
 import './AccommodationPage.css'
 
 export default function AccommodationPage() {
@@ -200,6 +201,7 @@ export default function AccommodationPage() {
 
   return (
     <div className="accommodation-page">
+      <ScrollToTopButton />
       <div className="page-header">
         <h2 className="page-title">숙소 결정하기 🏨</h2>
         <p className="page-subtitle">후보를 올리고 팀원들과 투표해서 최종 숙소를 결정하세요!</p>
@@ -271,7 +273,7 @@ export default function AccommodationPage() {
 
                     <div className="acc-footer">
                       <span className="acc-author" style={{ opacity: memberInfo?.is_deleted ? 0.6 : 1 }}>
-                        등록: <span style={{ color: memberInfo?.is_deleted ? '#ef4444' : 'inherit' }}>{displayAuthor}</span>
+                        등록: <span style={{ color: memberInfo?.is_deleted ? 'var(--accent-rose)' : 'inherit' }}>{displayAuthor}</span>
                       </span>
                         <div className="acc-actions">
                           <button

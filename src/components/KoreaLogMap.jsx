@@ -59,18 +59,18 @@ export default function KoreaLogMap({ visited = {}, onSelectProvince }) {
               cy={cy}
               r="6"
               fill="none"
-              stroke="var(--accent-primary, #6366f1)"
+              stroke="var(--accent-primary, #4a6b52)"
               strokeWidth="1.5"
               initial={{ r: 6, opacity: 0.9 }}
               animate={{ r: 16, opacity: 0 }}
               transition={{ duration: 1.6, repeat: Infinity, ease: 'easeOut', delay: idx * 0.15 }}
             />
-            <circle cx={cx} cy={cy} r="6.5" fill="#4f46e5" />
+            <circle cx={cx} cy={cy} r="6.5" fill="#c1723f" />
             <circle cx={cx} cy={cy} r="2.5" fill="#fff" />
             <text x={cx} y={cy - 12} fontSize="9" textAnchor="middle" style={{ pointerEvents: 'none' }}>🎯</text>
             {count > 1 && (
               <>
-                <circle cx={cx + 7} cy={cy - 7} r="6" fill="var(--accent-rose, #f43f5e)" />
+                <circle cx={cx + 7} cy={cy - 7} r="6" fill="var(--accent-rose, #c05a4e)" />
                 <text x={cx + 7} y={cy - 7 + 2.8} fontSize="7" fontWeight="800" fill="#fff" textAnchor="middle">
                   {count > 9 ? '9+' : count}
                 </text>

@@ -5,6 +5,7 @@ import { useTripContext } from '../context/TripContext.jsx'
 import { useSupabaseQuery } from '../hooks/useSupabaseQuery.js'
 import { getDisplayName } from '../lib/tripMembers.js'
 import BottomSheetModal from '../components/BottomSheetModal.jsx'
+import ScrollToTopButton from '../components/ScrollToTopButton.jsx'
 import './ChecklistPage.css'
 
 const QUICK_ITEMS = ['👕 여벌 옷', '🔌 충전기', '💊 상비약', '🪥 세면도구', '📸 카메라', '☂️ 우산', '🏧 현금 환전', '🗺️ 지도 저장']
@@ -151,6 +152,7 @@ export default function ChecklistPage() {
 
   return (
     <div className="checklist-page">
+      <ScrollToTopButton />
       <h2 className="page-title">준비물 체크리스트 ✅</h2>
 
       {/* Progress */}
@@ -297,9 +299,9 @@ export default function ChecklistPage() {
                           type="button"
                           className="btn btn-sm"
                           style={{
-                            background: isAssigned ? 'var(--primary-color)' : 'rgba(255,255,255,0.05)',
-                            color: isAssigned ? '#fff' : (memberInfo?.is_deleted ? '#ef4444' : 'var(--text-color)'),
-                            border: isAssigned ? '1px solid var(--primary-color)' : '1px solid rgba(255,255,255,0.1)',
+                            background: isAssigned ? 'var(--accent-primary)' : 'var(--bg-elevated)',
+                            color: isAssigned ? '#fbfaf4' : (memberInfo?.is_deleted ? 'var(--accent-rose)' : 'var(--text-primary)'),
+                            border: isAssigned ? '1px solid var(--accent-primary)' : '1px solid var(--border-subtle)',
                             borderRadius: '20px'
                           }}
                           onClick={() => handleToggleAssignee(memberId)}
@@ -310,7 +312,7 @@ export default function ChecklistPage() {
                     })}
                   </div>
                   {form.assigned_to.length === 0 && (
-                    <p className="error-text" style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '0.5rem' }}>최소 1명의 담당자를 선택해주세요.</p>
+                    <p className="error-text" style={{ color: 'var(--accent-rose)', fontSize: '0.8rem', marginTop: '0.5rem' }}>최소 1명의 담당자를 선택해주세요.</p>
                   )}
                 </div>
 
@@ -375,11 +377,11 @@ function CheckItem({ item, currentUser, membersMap, isAdmin, onToggle, onEdit, o
               return (
                 <span key={a} style={{ 
                   fontSize: '0.75rem', 
-                  background: hasChecked ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255,255,255,0.1)',
-                  color: hasChecked ? '#10b981' : (memberInfo?.is_deleted ? '#ef4444' : 'var(--text-muted)'),
+                  background: hasChecked ? 'rgba(90, 125, 95, 0.18)' : 'var(--bg-elevated)',
+                  color: hasChecked ? 'var(--accent-emerald)' : (memberInfo?.is_deleted ? 'var(--accent-rose)' : 'var(--text-muted)'),
                   padding: '2px 6px',
                   borderRadius: '10px',
-                  border: hasChecked ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid transparent',
+                  border: hasChecked ? '1px solid rgba(90, 125, 95, 0.45)' : '1px solid transparent',
                   textDecoration: memberInfo?.is_deleted ? 'line-through' : 'none'
                 }}>
                   {hasChecked ? '✅ ' : ''}{displayName}

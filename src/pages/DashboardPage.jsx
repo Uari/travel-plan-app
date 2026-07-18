@@ -112,7 +112,7 @@ export default function DashboardPage() {
             particleCount: 60,
             spread: 80,
             origin: { x: 0.5, y: 0.4 },
-            colors: ["#6366f1", "#8b5cf6", "#14b8a6", "#f59e0b", "#f43f5e"],
+            colors: ["#4a6b52", "#c1723f", "#cf9440", "#8fae91", "#f0d9a8"],
             useWorker: false, // 워커 생성 오버헤드 제거
             disableForReducedMotion: true,
           });
@@ -178,8 +178,8 @@ export default function DashboardPage() {
               {tripData?.is_completed && (
                 <span
                   style={{
-                    fontSize: '0.7rem', fontWeight: 700, color: 'var(--accent-emerald, #10b981)',
-                    background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.4)',
+                    fontSize: '0.7rem', fontWeight: 700, color: 'var(--accent-emerald, #5a7d5f)',
+                    background: 'rgba(90,125,95,0.14)', border: '1px solid rgba(90,125,95,0.4)',
                     borderRadius: '999px', padding: '0.15rem 0.5rem', whiteSpace: 'nowrap'
                   }}
                 >

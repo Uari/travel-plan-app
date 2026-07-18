@@ -93,8 +93,8 @@
 
 .mypage-tab.active {
   background: var(--accent-primary);
-  color: white;
-  box-shadow: var(--shadow-sm);
+  color: #fbfaf4;
+  box-shadow: var(--shadow-soft);
 }
 
 .mypage-forms {
@@ -120,21 +120,21 @@
 }
 
 .mypage-alert.success {
-  background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: rgba(90, 125, 95, 0.12);
+  color: var(--accent-emerald);
+  border: 1px solid rgba(90, 125, 95, 0.25);
 }
 
 .mypage-alert.error {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: rgba(192, 90, 78, 0.1);
+  color: var(--accent-rose);
+  border: 1px solid rgba(192, 90, 78, 0.25);
 }
 
 .warning-box {
-  background: rgba(245, 158, 11, 0.1);
-  color: #f59e0b;
-  border: 1px solid rgba(245, 158, 11, 0.2);
+  background: rgba(207, 148, 64, 0.12);
+  color: var(--accent-amber);
+  border: 1px solid rgba(207, 148, 64, 0.28);
   padding: 1rem;
   border-radius: var(--radius-md);
   font-size: 0.9rem;
@@ -142,12 +142,12 @@
 }
 
 .btn-danger {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: rgba(192, 90, 78, 0.1);
+  color: var(--accent-rose);
+  border: 1px solid rgba(192, 90, 78, 0.28);
 }
 
 .btn-danger:hover {
-  background: #ef4444;
-  color: white;
+  background: var(--accent-rose);
+  color: #fbfaf4;
 }

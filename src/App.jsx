@@ -195,7 +195,7 @@ function TripLayout({ user, onLogout }) {
             </span>
             <button 
               className="btn btn-secondary btn-sm" 
-              style={{ padding: '0.15rem 0.3rem', fontSize: '0.65rem', background: 'rgba(99,102,241,0.15)', border: 'none', color: 'var(--accent-primary)' }}
+              style={{ padding: '0.15rem 0.3rem', fontSize: '0.65rem', background: 'rgba(193,114,63,0.14)', border: 'none', color: 'var(--accent-secondary)' }}
               onClick={() => {
                 navigator.clipboard.writeText(tripId);
                 alert('초대 코드(' + tripId + ')가 복사되었습니다!\n카카오톡 친구에게 붙여넣기해서 초대하세요.');
@@ -216,8 +216,8 @@ function TripLayout({ user, onLogout }) {
       {isCompleted && (
         <div style={{
           display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center',
-          fontSize: '0.75rem', color: 'var(--accent-emerald, #10b981)',
-          background: 'rgba(16,185,129,0.1)', borderBottom: '1px solid rgba(16,185,129,0.25)',
+          fontSize: '0.75rem', color: 'var(--accent-emerald, #5a7d5f)',
+          background: 'rgba(90,125,95,0.12)', borderBottom: '1px solid rgba(90,125,95,0.25)',
           padding: '0.4rem 0.75rem', textAlign: 'center'
         }}>
           ✅ 완료된 여행이에요 · 읽기 전용 (수정하려면 홈에서 완료를 취소하세요)

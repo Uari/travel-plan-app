@@ -317,11 +317,11 @@ export default function LobbyPage({ user, onLogout }) {
                         position: 'absolute',
                         top: '12px',
                         right: '12px',
-                        background: 'rgba(239, 68, 68, 0.1)',
-                        color: '#ef4444',
+                        background: 'rgba(192, 90, 78, 0.1)',
+                        color: 'var(--accent-rose)',
                         border: 'none',
-                        borderRadius: '6px',
-                        padding: '4px 8px',
+                        borderRadius: '999px',
+                        padding: '4px 10px',
                         fontSize: '0.75rem',
                         fontWeight: '600',
                         cursor: 'pointer',
@@ -338,8 +338,8 @@ export default function LobbyPage({ user, onLogout }) {
                       <span
                         style={{
                           marginLeft: '0.5rem', fontSize: '0.65rem', fontWeight: 700,
-                          color: '#10b981', background: 'rgba(16,185,129,0.12)',
-                          border: '1px solid rgba(16,185,129,0.4)', borderRadius: '999px',
+                          color: 'var(--accent-emerald)', background: 'rgba(90,125,95,0.14)',
+                          border: '1px solid rgba(90,125,95,0.4)', borderRadius: '999px',
                           padding: '0.1rem 0.45rem', verticalAlign: 'middle', whiteSpace: 'nowrap'
                         }}
                       >
@@ -463,7 +463,7 @@ export default function LobbyPage({ user, onLogout }) {
                     required
                     autoFocus
                   />
-                  {joinError && <p className="text-xs mt-2" style={{ color: '#ef4444' }}>{joinError}</p>}
+                  {joinError && <p className="text-xs mt-2" style={{ color: 'var(--accent-rose)' }}>{joinError}</p>}
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem', marginTop: '2rem' }}>
                   <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowJoinModal(false)}>취소</button>

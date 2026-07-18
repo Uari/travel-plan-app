@@ -7,29 +7,30 @@ import MAP_PATHS from '../data/korea-map-paths.json'
  * 로딩 시간(Fetch + d3-geo 연산)이 0초로 즉시 렌더링됩니다.
  */
 
+// 어스톤 트래블맵 팔레트 (세이지·올리브·머스터드·테라코타·클레이)
 const PROVINCE_STYLES = {
-  'Seoul':        { color: '#a5b4fc', short: '서울' },
-  'Incheon':      { color: '#818cf8', short: '인천' },
-  'Gyeonggi':     { color: '#6366f1', short: '경기' },
-  'Gangwon':      { color: '#2dd4bf', short: '강원' },
-  'Chungcheongbuk': { color: '#f59e0b', short: '충북' },
-  'Chungcheongnam': { color: '#fbbf24', short: '충남' },
-  'Daejeon':      { color: '#fde68a', short: '대전' },
-  'Sejong':       { color: '#fde68a', short: '세종' },
-  'Jeollabuk':    { color: '#34d399', short: '전북' },
-  'Jeollanam':    { color: '#10b981', short: '전남' },
-  'Gwangju':      { color: '#059669', short: '광주' },
-  'Gyeongsangbuk': { color: '#a78bfa', short: '경북' },
-  'Daegu':        { color: '#7c3aed', short: '대구' },
-  'Gyeongsangnam': { color: '#f472b6', short: '경남' },
-  'Ulsan':        { color: '#fb7185', short: '울산' },
-  'Busan':        { color: '#f43f5e', short: '부산' },
-  'Jeju':         { color: '#22d3ee', short: '제주' },
+  'Seoul':        { color: '#8fae91', short: '서울' },
+  'Incheon':      { color: '#6f9073', short: '인천' },
+  'Gyeonggi':     { color: '#4a6b52', short: '경기' },
+  'Gangwon':      { color: '#7a9e8c', short: '강원' },
+  'Chungcheongbuk': { color: '#cf9440', short: '충북' },
+  'Chungcheongnam': { color: '#d9b46a', short: '충남' },
+  'Daejeon':      { color: '#e0c88a', short: '대전' },
+  'Sejong':       { color: '#e0c88a', short: '세종' },
+  'Jeollabuk':    { color: '#9caa5e', short: '전북' },
+  'Jeollanam':    { color: '#7d9150', short: '전남' },
+  'Gwangju':      { color: '#6b7d42', short: '광주' },
+  'Gyeongsangbuk': { color: '#c1723f', short: '경북' },
+  'Daegu':        { color: '#a85f34', short: '대구' },
+  'Gyeongsangnam': { color: '#cf8a5c', short: '경남' },
+  'Ulsan':        { color: '#d68f63', short: '울산' },
+  'Busan':        { color: '#c05a4e', short: '부산' },
+  'Jeju':         { color: '#5a9e8f', short: '제주' },
 }
 
 // GADM의 영문 이름에서 스타일 찾기
 function findStyle(name) {
-  if (!name) return { color: '#6366f1', short: '' }
+  if (!name) return { color: '#8fae91', short: '' }
   // 한글 이름 처리
   const KR_MAP = {
     '서울특별시': 'Seoul', '인천광역시': 'Incheon', '경기도': 'Gyeonggi',
@@ -46,7 +47,7 @@ function findStyle(name) {
     name.toLowerCase().includes(k.toLowerCase()) ||
     k.toLowerCase().includes(name.toLowerCase())
   )
-  return PROVINCE_STYLES[key] || { color: '#6366f1', short: name.slice(0, 2) }
+  return PROVINCE_STYLES[key] || { color: '#8fae91', short: name.slice(0, 2) }
 }
 
 function isActiveProvince(feature, result) {
@@ -131,11 +132,11 @@ export default function KoreaMapSVG({ result, dartState }) {
         {/* 격자선 */}
         {[80, 160, 240, 320, 400].map((y, i) => (
           <line key={`h${i}`} x1="0" y1={y} x2={W} y2={y}
-            stroke="rgba(99,102,241,0.045)" strokeWidth="0.8" strokeDasharray="5,10" />
+            stroke="rgba(120,110,80,0.06)" strokeWidth="0.8" strokeDasharray="5,10" />
         ))}
         {[68, 136, 204, 272].map((x, i) => (
           <line key={`v${i}`} x1={x} y1="0" x2={x} y2={H}
-            stroke="rgba(99,102,241,0.045)" strokeWidth="0.8" strokeDasharray="5,10" />
+            stroke="rgba(120,110,80,0.06)" strokeWidth="0.8" strokeDasharray="5,10" />
         ))}
 
         {/* 바다 이름 */}
@@ -207,18 +208,18 @@ export default function KoreaMapSVG({ result, dartState }) {
         {isLanded && activeProv && (
           <g>
             <motion.circle cx={activeProv.cx} cy={activeProv.cy - 18} r="5"
-              fill="none" stroke="#818cf8" strokeWidth="2"
+              fill="none" stroke="#d68f63" strokeWidth="2"
               initial={{ r: 5, opacity: 1 }}
               animate={{ r: 30, opacity: 0 }}
               transition={{ duration: 1.4, repeat: Infinity, ease: 'easeOut' }}
             />
             <motion.circle cx={activeProv.cx} cy={activeProv.cy - 18} r="4"
-              fill="none" stroke="#6366f1" strokeWidth="1.5"
+              fill="none" stroke="#c1723f" strokeWidth="1.5"
               initial={{ r: 4, opacity: 0.9 }}
               animate={{ r: 20, opacity: 0 }}
               transition={{ duration: 1.4, delay: 0.4, repeat: Infinity, ease: 'easeOut' }}
             />
-            <circle cx={activeProv.cx} cy={activeProv.cy - 18} r="9" fill="#4f46e5" filter="url(#gsoft3)" />
+            <circle cx={activeProv.cx} cy={activeProv.cy - 18} r="9" fill="#c1723f" filter="url(#gsoft3)" />
             <circle cx={activeProv.cx} cy={activeProv.cy - 18} r="4" fill="white" />
             <text x={activeProv.cx} y={activeProv.cy - 34} fontSize="18" textAnchor="middle">🎯</text>
           </g>

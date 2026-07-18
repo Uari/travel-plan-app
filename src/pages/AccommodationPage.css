@@ -1,5 +1,5 @@
 .accommodation-page {
-  padding: 1.5rem;
+  padding: 1.5rem 1.1rem;
   padding-bottom: 6rem;
   max-width: 800px;
   margin: 0 auto;
@@ -7,29 +7,28 @@
 }
 
 .page-header {
-  margin-bottom: 2rem;
+  margin-bottom: 1.75rem;
   text-align: center;
 }
 
 .page-title {
-  font-size: 1.8rem;
-  font-weight: 800;
-  color: var(--text-color);
-  margin-bottom: 0.5rem;
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-family: var(--font-heading);
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.4rem;
+  letter-spacing: -0.01em;
 }
 
 .page-subtitle {
   color: var(--text-muted);
-  font-size: 0.95rem;
+  font-size: 0.92rem;
 }
 
 .accommodation-list {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
 @media (min-width: 600px) {
@@ -38,34 +37,35 @@
   }
 }
 
+/* 숙소 카드 — 비교/투표 목적: 사진 크게, 정보 명확 */
 .acc-card {
-  background: var(--surface-color);
-  border-radius: 16px;
-  box-shadow: var(--shadow-sm);
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid var(--border-subtle);
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
   position: relative;
 }
 
 .acc-card:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-card);
 }
 
 .acc-card.selected {
-  border: 2px solid var(--primary-color);
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2);
+  border: 2px solid var(--accent-primary);
+  box-shadow: 0 8px 24px rgba(74, 107, 82, 0.2);
 }
 
 .acc-badge-selected {
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  color: white;
+  background: var(--accent-primary);
+  color: #fbfaf4;
   text-align: center;
   padding: 0.5rem;
   font-weight: 700;
-  font-size: 0.9rem;
-  letter-spacing: 0.5px;
+  font-size: 0.88rem;
+  letter-spacing: 0.02em;
 }
 
 .acc-card-inner {
@@ -81,11 +81,11 @@
   -webkit-overflow-scrolling: touch;
   height: 200px;
   flex-shrink: 0;
-  scrollbar-width: none; /* Firefox */
+  scrollbar-width: none;
 }
 
 .acc-carousel::-webkit-scrollbar {
-  display: none; /* Safari and Chrome */
+  display: none;
 }
 
 .acc-carousel-img {
@@ -98,7 +98,7 @@
 
 .acc-image-placeholder {
   height: 200px;
-  background: rgba(99, 102, 241, 0.05);
+  background: rgba(74, 107, 82, 0.06);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -107,7 +107,7 @@
 }
 
 .acc-info {
-  padding: 1.5rem;
+  padding: 1.35rem;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -122,18 +122,19 @@
 }
 
 .acc-name {
-  font-size: 1.3rem;
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
   font-weight: 700;
   margin: 0;
-  color: var(--text-color);
+  color: var(--text-primary);
 }
 
 .acc-link-btn {
-  background: rgba(99, 102, 241, 0.1);
-  color: var(--primary-color);
-  padding: 0.4rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.85rem;
+  background: rgba(74, 107, 82, 0.1);
+  color: var(--accent-primary);
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
   font-weight: 600;
   text-decoration: none;
   transition: background 0.2s;
@@ -141,32 +142,32 @@
 }
 
 .acc-link-btn:hover {
-  background: rgba(99, 102, 241, 0.2);
+  background: rgba(74, 107, 82, 0.18);
 }
 
 .acc-price {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--secondary-color);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent-secondary);
 }
 
 .acc-pros-cons {
-  background: var(--bg-color);
+  background: var(--bg-elevated);
   padding: 1rem;
-  border-radius: 12px;
-  font-size: 0.95rem;
-  color: var(--text-muted);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
 }
 
 .acc-pros-cons strong {
   display: block;
   margin-bottom: 0.4rem;
-  color: var(--text-color);
+  color: var(--text-primary);
 }
 
 .acc-pros-cons p {
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.55;
   white-space: pre-wrap;
 }
 
@@ -177,11 +178,11 @@
   align-items: center;
   flex-wrap: wrap;
   padding-top: 1rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  border-top: 1px solid var(--border-subtle);
 }
 
 .acc-author {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: var(--text-muted);
 }
 
@@ -195,32 +196,32 @@
 }
 
 .vote-btn {
-  background: var(--surface-color);
-  border: 1px solid rgba(0,0,0,0.1);
-  padding: 0.3rem 0.5rem;
-  border-radius: 20px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--radius-full);
   font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.2s;
-  color: var(--text-color);
+  color: var(--text-primary);
 }
 
 .vote-btn:hover {
-  background: rgba(0,0,0,0.02);
+  border-color: var(--border-active);
 }
 
 .vote-btn.voted {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
+  background: var(--accent-primary);
+  color: #fbfaf4;
+  border-color: var(--accent-primary);
 }
 
 .select-btn {
-  background: rgba(34, 197, 94, 0.1);
-  color: #16a34a;
-  border: none;
-  padding: 0.3rem 0.5rem;
-  border-radius: 20px;
+  background: rgba(90, 125, 95, 0.14);
+  color: var(--accent-emerald);
+  border: 1px solid rgba(90, 125, 95, 0.28);
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--radius-full);
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
@@ -228,7 +229,7 @@
 }
 
 .select-btn:hover {
-  background: rgba(34, 197, 94, 0.2);
+  background: rgba(90, 125, 95, 0.24);
 }
 
 .delete-btn {
@@ -254,26 +255,26 @@
 .file-input {
   width: 100%;
   padding: 0.4rem;
-  background: var(--bg-color);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  color: var(--text-color);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
   font-size: 0.9rem;
 }
 
 .file-input::file-selector-button {
-  background: var(--primary-color);
-  color: white;
+  background: var(--accent-primary);
+  color: #fbfaf4;
   border: none;
   padding: 0.4rem 0.8rem;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   margin-right: 1rem;
   cursor: pointer;
   transition: background 0.2s;
 }
 
 .file-input::file-selector-button:hover {
-  background: #4f46e5;
+  background: var(--accent-primary-deep);
 }
 
 @keyframes fadeIn {

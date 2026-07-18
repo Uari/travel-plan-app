@@ -5,6 +5,7 @@ import { useTripContext } from '../context/TripContext.jsx'
 import { useSupabaseQuery } from '../hooks/useSupabaseQuery.js'
 import { getDisplayName, canEditItem } from '../lib/tripMembers.js'
 import BottomSheetModal from '../components/BottomSheetModal.jsx'
+import ScrollToTopButton from '../components/ScrollToTopButton.jsx'
 import './PlanPage.css'
 
 export default function PlanPage() {
@@ -104,6 +105,7 @@ export default function PlanPage() {
 
   return (
     <div className="plan-page">
+      <ScrollToTopButton />
       <div className="plan-header">
         <h2 className="page-title" style={{ marginBottom: 0 }}>여행 일정 🗓️</h2>
         {!isCompleted && (
@@ -301,7 +303,7 @@ function PlanCard({ plan, expanded, onToggle, onEdit, onDelete, currentUser, mem
           </div>
         </div>
         <div className="plan-card-right">
-          <span className="plan-author" style={{ opacity: memberInfo?.is_deleted ? 0.6 : 1, color: memberInfo?.is_deleted ? '#ef4444' : 'inherit' }}>
+          <span className="plan-author" style={{ opacity: memberInfo?.is_deleted ? 0.6 : 1, color: memberInfo?.is_deleted ? 'var(--accent-rose)' : 'inherit' }}>
             {displayAuthor}
           </span>
           <span className="plan-chevron">{expanded ? '▲' : '▼'}</span>
