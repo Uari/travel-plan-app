@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Plane, AlertTriangle, LogIn } from 'lucide-react'
 import { login, signup } from '../lib/authApi.js'
 import './LoginPage.css'
 
@@ -90,7 +91,7 @@ export default function LoginPage({ onLogin }) {
         transition={{ duration: 0.55, ease: [0.4, 0, 0.2, 1] }}
       >
         <div className="login-logo">
-          <div className="login-logo-icon">✈️</div>
+          <div className="login-logo-icon"><Plane size={28} /></div>
           <div className="login-logo-text">
             <h1>여행플랜</h1>
             <p>완벽한 여행의 시작</p>
@@ -111,7 +112,7 @@ export default function LoginPage({ onLogin }) {
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
               >
-                ⚠️ {errorMessage}
+<AlertTriangle size={16} /> {errorMessage}
               </motion.div>
             )}
           </AnimatePresence>
@@ -166,7 +167,7 @@ export default function LoginPage({ onLogin }) {
             disabled={loading}
           >
             <span>{loading ? '처리 중...' : (mode === 'login' ? '로그인' : '회원가입')}</span>
-            {!loading && <span>🚀</span>}
+            {!loading && <span><LogIn size={18} /></span>}
           </motion.button>
         </motion.form>
 

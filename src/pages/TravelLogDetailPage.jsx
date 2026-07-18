@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ArrowLeft, X, ChevronLeft, ChevronRight, Calendar, Hotel, Map, MapPin, Camera, Plus, Plane, HelpCircle, ImageOff } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import { getCountry } from '../data/countries.js'
@@ -122,8 +123,8 @@ export default function TravelLogDetailPage({ user }) {
   const placeLabel = () => {
     if (!trip) return ''
     const country = getCountry(trip.country_code)
-    if (trip.country_code === 'KR') return `🇰🇷 ${trip.region_label || trip.region_province || '대한민국'}`
-    return `${country?.emoji || '🌍'} ${country?.name || '해외'}${trip.destination_label ? ` · ${trip.destination_label}` : ''}`
+    if (trip.country_code === 'KR') return `${trip.region_label || trip.region_province || '대한민국'}`
+    return `${country?.name || '해외'}${trip.destination_label ? ` · ${trip.destination_label}` : ''}`
   }
 
   const handleUpload = async (e) => {
@@ -204,7 +205,7 @@ export default function TravelLogDetailPage({ user }) {
     return (
       <div className="tld-page">
         <div className="empty-state">
-          <div className="empty-icon" style={{ animation: 'floatLoading 1.5s ease-in-out infinite' }}>✈️</div>
+          <div className="empty-icon" style={{ animation: 'floatLoading 1.5s ease-in-out infinite' }}><Plane size={48} strokeWidth={1.5} /></div>
           <p>여행 로그를 불러오는 중...</p>
         </div>
       </div>
@@ -215,8 +216,8 @@ export default function TravelLogDetailPage({ user }) {
     return (
       <div className="tld-page">
         <div className="empty-state">
-          <button className="btn btn-secondary btn-sm" style={{ marginBottom: '1rem' }} onClick={() => navigate('/travel-log')}>← 여행 로그</button>
-          <div className="empty-icon">❓</div>
+          <button className="btn btn-secondary btn-sm" style={{ marginBottom: '1rem' }} onClick={() => navigate('/travel-log')}><ArrowLeft size={18} /> 여행 로그</button>
+          <div className="empty-icon"><HelpCircle size={48} strokeWidth={1.5} /></div>
           <p>여행 정보를 찾을 수 없어요.</p>
         </div>
       </div>
@@ -227,7 +228,7 @@ export default function TravelLogDetailPage({ user }) {
 
   const uploadLabel = (
     <label className={`tld-add-photo${uploading || photos.length >= MAX_PHOTOS ? ' disabled' : ''}`}>
-      {uploading ? '업로드 중…' : '＋ 사진'}
+      {uploading ? '업로드 중…' : <><Plus size={16} /> 사진</>}
       <input
         type="file"
         accept="image/*"
@@ -246,11 +247,11 @@ export default function TravelLogDetailPage({ user }) {
         className={`tld-hero${coverPhoto ? ' has-cover' : ''}`}
         style={coverPhoto ? { backgroundImage: `url(${coverPhoto.url})` } : undefined}
       >
-        <button className="tld-back" onClick={() => navigate('/travel-log')} aria-label="뒤로">←</button>
+        <button className="tld-back" onClick={() => navigate('/travel-log')} aria-label="뒤로"><ArrowLeft size={18} /></button>
         <div className="tld-hero-overlay">
           <span className="tld-hero-place">{placeLabel()}</span>
           <h1 className="tld-hero-title">{trip.name}</h1>
-          {trip.start_date && <span className="tld-hero-date">📅 {trip.start_date}</span>}
+          {trip.start_date && <span className="tld-hero-date"><Calendar size={14} /> {trip.start_date}</span>}
         </div>
       </div>
 
@@ -278,13 +279,13 @@ export default function TravelLogDetailPage({ user }) {
         </div>
 
         {selectedAcc && (
-          <div className="tld-accom">🏨 확정 숙소 · <strong>{selectedAcc.name}</strong></div>
+          <div className="tld-accom"><Hotel size={16} /> 확정 숙소 · <strong>{selectedAcc.name}</strong></div>
         )}
 
         {/* 일정 타임라인 */}
         {summary.days.length > 0 && (
           <section className="tld-section">
-            <h3 className="tld-h">🗺️ 여행 일정</h3>
+            <h3 className="tld-h"><Map size={20} /> 여행 일정</h3>
             <div className="tld-timeline">
               {summary.days.map((day) => (
                 <div key={day} className="tld-tl-day">
@@ -296,7 +297,7 @@ export default function TravelLogDetailPage({ user }) {
                         <li key={p.id}>
                           {p.time_label && <span className="tld-time">{p.time_label}</span>}
                           <span className="tld-tl-title">{p.title}</span>
-                          {p.location && <span className="tld-loc">📍{p.location}</span>}
+                          {p.location && <span className="tld-loc"><MapPin size={14} />{p.location}</span>}
                         </li>
                       ))}
                     </ul>
@@ -310,13 +311,13 @@ export default function TravelLogDetailPage({ user }) {
         {/* 사진 갤러리 */}
         <section className="tld-section">
           <div className="tld-section-header">
-            <h3 className="tld-h">📸 사진 <span className="tld-count">{photos.length}/{MAX_PHOTOS}</span></h3>
+            <h3 className="tld-h"><Camera size={20} /> 사진 <span className="tld-count">{photos.length}/{MAX_PHOTOS}</span></h3>
             {photos.length > 0 && uploadLabel}
           </div>
 
           {photos.length === 0 ? (
             <label className={`tld-photos-empty${uploading ? ' disabled' : ''}`}>
-              <div className="tld-photos-empty-icon">🖼️</div>
+              <div className="tld-photos-empty-icon"><ImageOff size={48} strokeWidth={1.5} /></div>
               <p>{uploading ? '업로드 중…' : '여행 사진을 남겨보세요'}</p>
               <span>탭해서 추가 (최대 {MAX_PHOTOS}장)</span>
               <input type="file" accept="image/*" multiple onChange={handleUpload} disabled={uploading} style={{ display: 'none' }} />
@@ -332,7 +333,7 @@ export default function TravelLogDetailPage({ user }) {
                       className="tld-photo-del"
                       onClick={(e) => { e.stopPropagation(); handleDeletePhoto(photo) }}
                       title="삭제"
-                    >✕</button>
+                    ><X size={16} /></button>
                   )}
                 </div>
               ))}
@@ -351,7 +352,7 @@ export default function TravelLogDetailPage({ user }) {
             exit={{ opacity: 0 }}
             onClick={() => setViewerIndex(null)}
           >
-            <button className="tld-viewer-close" onClick={() => setViewerIndex(null)} aria-label="닫기">✕</button>
+            <button className="tld-viewer-close" onClick={() => setViewerIndex(null)} aria-label="닫기"><X size={20} /></button>
             <span className="tld-viewer-count">{viewerIndex + 1} / {photos.length}</span>
 
             {photos.length > 1 && (
@@ -359,7 +360,7 @@ export default function TravelLogDetailPage({ user }) {
                 className="tld-viewer-nav prev"
                 onClick={(e) => { e.stopPropagation(); showPrev() }}
                 aria-label="이전"
-              >‹</button>
+              ><ChevronLeft size={24} /></button>
             )}
 
             <motion.img
@@ -380,7 +381,7 @@ export default function TravelLogDetailPage({ user }) {
                 className="tld-viewer-nav next"
                 onClick={(e) => { e.stopPropagation(); showNext() }}
                 aria-label="다음"
-              >›</button>
+              ><ChevronRight size={24} /></button>
             )}
 
             <div className="tld-viewer-by">

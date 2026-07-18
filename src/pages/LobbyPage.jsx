@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Plane, User, BookOpen, ArrowRight, Sparkles, UserPlus, Check, Calendar, Users, Plus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import TripCompleteModal from '../components/TripCompleteModal.jsx'
@@ -229,10 +230,10 @@ export default function LobbyPage({ user, onLogout }) {
       <div className="login-blob login-blob-2" />
       
       <header className="lobby-header">
-        <div className="lobby-logo">✈️ <span>여행플랜 로비</span></div>
+        <div className="lobby-logo"><Plane size={18} /> <span>여행플랜 로비</span></div>
         <div className="lobby-user-area">
           <button className="mypage-btn" onClick={() => navigate('/mypage')} style={{color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600}}>
-            👤 {user.name}
+            <User size={14} /> {user.name}
           </button>
           <button className="logout-btn" onClick={onLogout}>로그아웃</button>
         </div>
@@ -245,12 +246,12 @@ export default function LobbyPage({ user, onLogout }) {
           whileTap={{ scale: 0.98 }}
           onClick={() => navigate('/travel-log')}
         >
-          <div className="travellog-hero-icon">📖</div>
+          <div className="travellog-hero-icon"><BookOpen size={20} /></div>
           <div className="travellog-hero-text">
             <strong>여행 로그</strong>
             <span>다녀온 여행을 지도에서 다시 만나보세요</span>
           </div>
-          <div className="travellog-hero-arrow">→</div>
+          <div className="travellog-hero-arrow"><ArrowRight size={16} /></div>
         </motion.button>
 
         <div className="lobby-actions">
@@ -259,14 +260,14 @@ export default function LobbyPage({ user, onLogout }) {
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowCreateModal(true)}
           >
-            <span>✨</span> 새 여행 만들기
+            <Sparkles size={16} /> 새 여행 만들기
           </motion.button>
           <motion.button
             className="btn btn-secondary lobby-action-btn"
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowJoinModal(true)}
           >
-            <span>🤝</span> 코드로 입장
+            <UserPlus size={16} /> 코드로 입장
           </motion.button>
         </div>
 
@@ -343,14 +344,14 @@ export default function LobbyPage({ user, onLogout }) {
                           padding: '0.1rem 0.45rem', verticalAlign: 'middle', whiteSpace: 'nowrap'
                         }}
                       >
-                        ✅ 완료
+                        <Check size={14} /> 완료
                       </span>
                     )}
                   </h3>
                   <div className="trip-card-meta">
                     <span className="trip-code">코드: {trip.id}</span>
-                    {trip.start_date && <span className="trip-date">📅 {trip.start_date}</span>}
-                    <span className="trip-members">👥 {trip.member_count}명</span>
+                    {trip.start_date && <span className="trip-date"><Calendar size={14} /> {trip.start_date}</span>}
+                    <span className="trip-members"><Users size={14} /> {trip.member_count}명</span>
                   </div>
 
                   {trip.am_admin && (
@@ -370,7 +371,7 @@ export default function LobbyPage({ user, onLogout }) {
                             setCompleteTargetId(trip.id)
                           }}
                         >
-                          ✅ 여행 완료
+                          <Check size={16} /> 여행 완료
                         </button>
                       )}
                     </div>
@@ -403,7 +404,7 @@ export default function LobbyPage({ user, onLogout }) {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="modal-handle" />
-              <div className="modal-title">✨ 새 여행 만들기</div>
+              <div className="modal-title"><Sparkles size={20} /> 새 여행 만들기</div>
               <form onSubmit={handleCreateTrip}>
                 <div className="input-group">
                   <label className="input-label">여행 이름</label>
@@ -429,7 +430,7 @@ export default function LobbyPage({ user, onLogout }) {
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem', marginTop: '2rem' }}>
                   <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowCreateModal(false)}>취소</button>
-                  <button type="submit" className="btn btn-primary" style={{ flex: 2 }} disabled={!newTripName.trim()}>만들기 🚀</button>
+                  <button type="submit" className="btn btn-primary" style={{ flex: 2 }} disabled={!newTripName.trim()}>만들기 <Plus size={16} /></button>
                 </div>
               </form>
             </motion.div>
@@ -450,7 +451,7 @@ export default function LobbyPage({ user, onLogout }) {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="modal-handle" />
-              <div className="modal-title">🤝 코드로 입장</div>
+              <div className="modal-title"><UserPlus size={20} /> 코드로 입장</div>
               <form onSubmit={handleJoinTrip}>
                 <div className="input-group">
                   <label className="input-label">초대 코드 (6자리)</label>

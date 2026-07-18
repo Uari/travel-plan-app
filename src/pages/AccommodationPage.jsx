@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
+import { Hotel, Sparkles, Wallet, FileText, Link2, ThumbsUp, Check, Pencil, Trash2, X, Plane, BedDouble } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useTripContext } from '../context/TripContext.jsx'
 import { useSupabaseQuery } from '../hooks/useSupabaseQuery.js'
@@ -231,7 +232,7 @@ export default function AccommodationPage() {
     <div className="accommodation-page">
       <ScrollToTopButton />
       <div className="page-header">
-        <h2 className="page-title">숙소 결정하기 🏨</h2>
+        <h2 className="page-title">숙소 결정하기 <Hotel size={24} strokeWidth={2} /></h2>
         <p className="page-subtitle">후보를 올리고 팀원들과 투표해서 최종 숙소를 결정하세요!</p>
       </div>
 
@@ -256,12 +257,12 @@ export default function AccommodationPage() {
       <div className="accommodation-list">
         {loading ? (
           <div className="empty-state">
-            <div className="empty-icon" style={{ animation: 'floatLoading 1.5s ease-in-out infinite' }}>✈️</div>
+            <div className="empty-icon" style={{ animation: 'floatLoading 1.5s ease-in-out infinite' }}><Plane size={48} strokeWidth={1.5} /></div>
             <p>여행 데이터를 불러오는 중...</p>
           </div>
         ) : accommodations.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">🛏️</div>
+            <div className="empty-icon"><BedDouble size={48} strokeWidth={1.5} /></div>
             <p>등록된 숙소 후보가 없습니다.<br/>새로운 숙소를 등록해보세요!</p>
           </div>
         ) : (
@@ -283,7 +284,7 @@ export default function AccommodationPage() {
                 transition={{ layout: { duration: 0.4, ease: [0.4, 0, 0.2, 1] } }}
               >
                 {acc.is_selected && (
-                  <div className="acc-badge-selected">✨ 최종 확정 숙소 ✨</div>
+                  <div className="acc-badge-selected"><Sparkles size={16} /> 최종 확정 숙소 <Sparkles size={16} /></div>
                 )}
                 
                 <div className="acc-card-inner">
@@ -294,7 +295,7 @@ export default function AccommodationPage() {
                       ))}
                     </div>
                   ) : (
-                    <div className="acc-image-placeholder">🏨</div>
+                    <div className="acc-image-placeholder"><Hotel size={32} /></div>
                   )}
                   
                   <div className="acc-info">
@@ -302,18 +303,18 @@ export default function AccommodationPage() {
                       <h3 className="acc-name" style={{ opacity: memberInfo?.is_deleted ? 0.6 : 1 }}>{acc.name}</h3>
                       {acc.link_url && (
                         <a href={acc.link_url} target="_blank" rel="noreferrer" className="acc-link-btn">
-                          🔗 링크 보기
+                          <Link2 size={16} /> 링크 보기
                         </a>
                       )}
                     </div>
                     
                     <div className="acc-price">
-                      💰 예상 {acc.price.toLocaleString()}원 / 1박
+                      <Wallet size={16} /> 예상 {acc.price.toLocaleString()}원 / 1박
                     </div>
                     
                     {acc.pros_cons && (
                       <div className="acc-pros-cons">
-                        <strong>📝 장단점 및 특징:</strong>
+                        <strong><FileText size={16} /> 장단점 및 특징:</strong>
                         <p>{acc.pros_cons}</p>
                       </div>
                     )}
@@ -329,20 +330,20 @@ export default function AccommodationPage() {
                             disabled={isCompleted}
                             style={isCompleted ? { cursor: 'default' } : undefined}
                           >
-                            👍 {acc.votes?.length || 0}
+                            <ThumbsUp size={16} /> {acc.votes?.length || 0}
                           </button>
                           {(!acc.is_selected && isAdmin && !isCompleted) && (
                             <button className="select-btn" onClick={() => selectAccommodation(acc.id)}>
-                              ✅ 확정하기
+                              <Check size={16} /> 확정하기
                             </button>
                           )}
                           {canEditDelete && (
                             <>
                               <button className="delete-btn" onClick={() => handleEdit(acc)} title="수정">
-                                ✏️
+                                <Pencil size={16} />
                               </button>
                               <button className="delete-btn" onClick={() => handleDelete(acc.id)} title="삭제">
-                                🗑️
+                                <Trash2 size={16} />
                               </button>
                             </>
                           )}
@@ -367,7 +368,7 @@ export default function AccommodationPage() {
 
       {/* Add Modal */}
       <BottomSheetModal open={showModal} onClose={() => setShowModal(false)}>
-              <h3 className="modal-title">✨ 숙소 후보 {editId ? '수정' : '등록'}</h3>
+              <h3 className="modal-title"><Sparkles size={20} /> 숙소 후보 {editId ? '수정' : '등록'}</h3>
               <form onSubmit={handleAddOrEdit} className="acc-form">
                 <div className="input-group">
                   <label className="input-label">숙소 이름 *</label>
@@ -417,7 +418,7 @@ export default function AccommodationPage() {
                     {form.img_urls.map((url, idx) => (
                       <div key={'old-'+idx} style={{ position: 'relative', width: '60px', height: '60px', flexShrink: 0 }}>
                         <img src={url} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
-                        <button type="button" onClick={() => removeExistingImage(idx)} style={{ position: 'absolute', top: -5, right: -5, background: 'red', color: 'white', borderRadius: '50%', width: '20px', height: '20px', fontSize: '12px', border: 'none', cursor: 'pointer' }}>✕</button>
+                        <button type="button" onClick={() => removeExistingImage(idx)} style={{ position: 'absolute', top: -5, right: -5, background: 'red', color: 'white', borderRadius: '50%', width: '20px', height: '20px', fontSize: '12px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={16} /></button>
                       </div>
                     ))}
                     {selectedFiles.map((file, idx) => (
@@ -425,7 +426,7 @@ export default function AccommodationPage() {
                         <div style={{ width: '100%', height: '100%', background: 'rgba(255,255,255,0.1)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', overflow: 'hidden' }}>
                           새 파일
                         </div>
-                        <button type="button" onClick={() => removeSelectedFile(idx)} style={{ position: 'absolute', top: -5, right: -5, background: 'red', color: 'white', borderRadius: '50%', width: '20px', height: '20px', fontSize: '12px', border: 'none', cursor: 'pointer' }}>✕</button>
+                        <button type="button" onClick={() => removeSelectedFile(idx)} style={{ position: 'absolute', top: -5, right: -5, background: 'red', color: 'white', borderRadius: '50%', width: '20px', height: '20px', fontSize: '12px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={16} /></button>
                       </div>
                     ))}
                   </div>

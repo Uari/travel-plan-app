@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
+import { Hotel, Utensils, Car, FerrisWheel, Wallet, Package, Plus, X, Plane } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useTripContext } from '../context/TripContext.jsx'
 import { useSupabaseQuery } from '../hooks/useSupabaseQuery.js'
@@ -9,12 +10,12 @@ import ScrollToTopButton from '../components/ScrollToTopButton.jsx'
 import './ExpensePage.css'
 
 const CATEGORIES = [
-  { id: 'accommodation', label: '🏨 숙소', color: 'var(--accent-primary)' },
-  { id: 'food', label: '🍽️ 식비', color: 'var(--accent-emerald)' },
-  { id: 'transport', label: '🚗 교통', color: 'var(--accent-amber)' },
-  { id: 'activity', label: '🎡 액티비티', color: 'var(--accent-secondary)' },
-  { id: 'extra', label: '💸 추가금', color: 'var(--accent-rose)' },
-  { id: 'etc', label: '📦 기타', color: 'var(--text-muted)' },
+  { id: 'accommodation', label: '숙소', icon: Hotel, color: 'var(--accent-primary)' },
+  { id: 'food', label: '식비', icon: Utensils, color: 'var(--accent-emerald)' },
+  { id: 'transport', label: '교통', icon: Car, color: 'var(--accent-amber)' },
+  { id: 'activity', label: '액티비티', icon: FerrisWheel, color: 'var(--accent-secondary)' },
+  { id: 'extra', label: '추가금', icon: Wallet, color: 'var(--accent-rose)' },
+  { id: 'etc', label: '기타', icon: Package, color: 'var(--text-muted)' },
 ]
 
 export default function ExpensePage() {
@@ -99,10 +100,10 @@ export default function ExpensePage() {
     <div className="expense-page">
       <ScrollToTopButton />
       <div className="expense-header">
-        <h2 className="page-title" style={{ marginBottom: 0 }}>비용 정산 💸</h2>
+        <h2 className="page-title" style={{ marginBottom: 0, display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}><Wallet size={24} /> 비용 정산</h2>
         {!isCompleted && (
-          <button id="expense-add-btn" className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>
-            + 추가
+          <button id="expense-add-btn" className="btn btn-primary btn-sm" onClick={() => setShowModal(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+            <Plus size={15} /> 추가
           </button>
         )}
       </div>
@@ -154,7 +155,7 @@ export default function ExpensePage() {
             {categoryTotals.map((cat) => (
               <div key={cat.id} className="category-bar-item">
                 <div className="category-bar-label">
-                  <span>{cat.label}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}><cat.icon size={14} /> {cat.label}</span>
                   <span className="category-bar-amount">{cat.total.toLocaleString()}원</span>
                 </div>
                 <div className="category-bar-track">
@@ -175,12 +176,12 @@ export default function ExpensePage() {
       {/* Expense list */}
       {loading ? (
         <div className="empty-state">
-          <div className="empty-icon" style={{ animation: 'floatLoading 1.5s ease-in-out infinite' }}>✈️</div>
+          <div className="empty-icon" style={{ animation: 'floatLoading 1.5s ease-in-out infinite' }}><Plane size={48} strokeWidth={1.5} /></div>
           <p>여행 데이터를 불러오는 중...</p>
         </div>
       ) : expenses.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-icon">💸</div>
+          <div className="empty-icon"><Wallet size={48} strokeWidth={1.5} /></div>
           <p>아직 비용 내역이 없어요.</p>
           <p>+ 추가로 비용을 기록해 보세요!</p>
         </div>
@@ -201,15 +202,15 @@ export default function ExpensePage() {
                 layout
               >
                 <div className="expense-item-left">
-                  <span className="expense-cat-icon" style={{ color: cat.color }}>
-                    {cat.label.split(' ')[0]}
+                  <span className="expense-cat-icon" style={{ color: cat.color, display: 'inline-flex', alignItems: 'center' }}>
+                    <cat.icon size={18} />
                   </span>
                   <div>
                     <div className="expense-label" style={{ opacity: memberInfo?.is_deleted ? 0.6 : 1 }}>{expense.label}</div>
                     <div className="expense-meta">
                       <span style={{ color: memberInfo?.is_deleted ? 'var(--accent-rose)' : 'inherit' }}>{displayAuthor}</span>
                       <span>·</span>
-                      <span style={{ color: cat.color }}>{cat.label.split(' ')[1]}</span>
+                      <span style={{ color: cat.color }}>{cat.label}</span>
                     </div>
                   </div>
                 </div>
@@ -220,7 +221,7 @@ export default function ExpensePage() {
                       id={`expense-del-${expense.id}`}
                       className="expense-del-btn"
                       onClick={() => handleDelete(expense.id)}
-                    >✕</button>
+                    ><X size={16} /></button>
                   )}
                 </div>
               </motion.div>
@@ -231,7 +232,7 @@ export default function ExpensePage() {
 
       {/* Add modal */}
       <BottomSheetModal open={showModal} onClose={() => setShowModal(false)}>
-              <div className="modal-title">➕ 비용 추가</div>
+              <div className="modal-title"><Plus size={20} /> 비용 추가</div>
 
               <form onSubmit={handleSubmit}>
                 <div className="input-group">
@@ -246,7 +247,7 @@ export default function ExpensePage() {
                 </div>
 
                 <div className="input-group">
-                  <label className="input-label">💰 금액 (원) *</label>
+                  <label className="input-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}><Wallet size={15} /> 금액 (원) *</label>
                   <input
                     className="input"
                     type="number"
@@ -270,7 +271,7 @@ export default function ExpensePage() {
                         style={form.category === cat.id ? { borderColor: cat.color, color: cat.color, background: cat.color + '1a' } : {}}
                         onClick={() => setForm({ ...form, category: cat.id })}
                       >
-                        {cat.label}
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', justifyContent: 'center' }}><cat.icon size={15} /> {cat.label}</span>
                       </button>
                     ))}
                   </div>

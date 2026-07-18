@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Routes, Route, Navigate, useNavigate, useLocation, useParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Plane, Crown, UserPlus, User, Check, AlertTriangle } from 'lucide-react'
 import { supabase } from './lib/supabase.js'
 import { TripContext } from './context/TripContext.jsx'
 import LoginPage from './pages/LoginPage.jsx'
@@ -143,10 +144,10 @@ function JoinTrip({ user }) {
   return (
     <div className="app-shell" style={{ justifyContent: 'center', alignItems: 'center', gap: '1rem', textAlign: 'center', padding: '1.5rem' }}>
       {status === 'joining' ? (
-        <p>여행에 입장 중… ✈️</p>
+        <p style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>여행에 입장 중… <Plane size={16} /></p>
       ) : (
         <>
-          <p>⚠️ {msg}</p>
+          <p style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}><AlertTriangle size={16} /> {msg}</p>
           <button className="btn btn-secondary" onClick={() => navigate('/lobby', { replace: true })}>로비로 돌아가기</button>
         </>
       )}
@@ -245,7 +246,7 @@ function TripLayout({ user, onLogout }) {
   if (loadError) {
     return (
       <div className="app-shell" style={{justifyContent:'center', alignItems:'center', gap: '1rem', textAlign: 'center', padding: '1.5rem'}}>
-        <p>⚠️ {loadError}</p>
+        <p style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}><AlertTriangle size={16} /> {loadError}</p>
         <button className="btn btn-secondary" onClick={() => navigate('/lobby')}>로비로 돌아가기</button>
       </div>
     )
@@ -259,24 +260,24 @@ function TripLayout({ user, onLogout }) {
     <div className="app-shell">
       {/* Top bar */}
       <header className="top-bar">
-        <div className="top-bar-logo" onClick={() => navigate('/lobby')} style={{ cursor: 'pointer' }}>
-          ✈️ <span>여행플랜</span>
+        <div className="top-bar-logo" onClick={() => navigate('/lobby')} style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+          <Plane size={18} /> <span>여행플랜</span>
         </div>
         <div className="top-bar-right" style={{ gap: '4px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '2px', marginRight: '4px' }}>
-            <span className="top-bar-user" style={{ fontSize: '0.75rem', opacity: 0.7 }}>
-              {tripId.slice(0,6)}..{isAdmin ? '👑' : ''}
+            <span className="top-bar-user" style={{ fontSize: '0.75rem', opacity: 0.7, display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+              {tripId.slice(0,6)}..{isAdmin && <Crown size={13} />}
             </span>
             <button
               className="btn btn-secondary btn-sm"
               style={{ padding: '0.15rem 0.45rem', fontSize: '0.65rem', background: 'rgba(193,114,63,0.14)', border: 'none', color: 'var(--accent-secondary)' }}
               onClick={() => setShowInvite(true)}
             >
-              🤝 초대
+              <UserPlus size={13} /> 초대
             </button>
           </div>
-          <button className="top-bar-user mypage-btn" onClick={() => navigate('/mypage')} style={{ padding: '0.2rem 0.4rem', fontSize: '0.75rem' }}>
-            👤{user.name.slice(0,3)}
+          <button className="top-bar-user mypage-btn" onClick={() => navigate('/mypage')} style={{ padding: '0.2rem 0.4rem', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+            <User size={13} />{user.name.slice(0,3)}
           </button>
           <button id="logout-btn" className="logout-btn" onClick={onLogout} title="로그아웃" style={{ padding: '0.2rem 0.4rem', fontSize: '0.7rem' }}>
             로그아웃
@@ -291,7 +292,7 @@ function TripLayout({ user, onLogout }) {
           background: 'rgba(90,125,95,0.12)', borderBottom: '1px solid rgba(90,125,95,0.25)',
           padding: '0.4rem 0.75rem', textAlign: 'center'
         }}>
-          ✅ 완료된 여행이에요 · 읽기 전용 (수정하려면 홈에서 완료를 취소하세요)
+          <Check size={14} /> 완료된 여행이에요 · 읽기 전용 (수정하려면 홈에서 완료를 취소하세요)
         </div>
       )}
 

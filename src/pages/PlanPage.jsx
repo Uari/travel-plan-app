@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { CalendarDays, Map, Pencil, Plus, MapPin, Check, Hotel, Image, FileText, Trash2, Plane } from 'lucide-react'
 import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion'
 import { supabase } from '../lib/supabase.js'
 import { useTripContext } from '../context/TripContext.jsx'
@@ -207,7 +208,7 @@ export default function PlanPage() {
     <div className="plan-page">
       <ScrollToTopButton />
       <div className="plan-header">
-        <h2 className="page-title" style={{ marginBottom: 0 }}>여행 일정 🗓️</h2>
+        <h2 className="page-title" style={{ marginBottom: 0 }}>여행 일정 <CalendarDays size={24} strokeWidth={2} /></h2>
         {!isCompleted && (
           <button id="plan-add-btn" className="btn btn-primary btn-sm" onClick={openAdd}>
             + 추가
@@ -217,12 +218,12 @@ export default function PlanPage() {
 
       {loading ? (
         <div className="empty-state">
-          <div className="empty-icon" style={{ animation: 'floatLoading 1.5s ease-in-out infinite' }}>✈️</div>
+          <div className="empty-icon" style={{ animation: 'floatLoading 1.5s ease-in-out infinite' }}><Plane size={48} strokeWidth={1.5} /></div>
           <p>여행 데이터를 불러오는 중...</p>
         </div>
       ) : plans.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-icon">🗓️</div>
+          <div className="empty-icon"><CalendarDays size={48} strokeWidth={1.5} /></div>
           <p>아직 일정이 없어요.</p>
           <p>+ 추가 버튼으로 첫 일정을 만들어 보세요!</p>
         </div>
@@ -238,7 +239,7 @@ export default function PlanPage() {
                   className={`day-map-toggle${openMapDays[day] ? ' active' : ''}`}
                   onClick={() => toggleMap(day)}
                 >
-                  🗺️ {openMapDays[day] ? '지도 닫기' : '지도'}
+                  <Map size={16} /> {openMapDays[day] ? '지도 닫기' : '지도'}
                 </button>
               </div>
 
@@ -289,7 +290,7 @@ export default function PlanPage() {
 
       {/* Add/Edit Modal */}
       <BottomSheetModal open={showModal} onClose={() => setShowModal(false)}>
-              <div className="modal-title">{editItem ? '✏️ 일정 수정' : '➕ 새 일정 추가'}</div>
+              <div className="modal-title">{editItem ? <><Pencil size={20} /> 일정 수정</> : <><Plus size={20} /> 새 일정 추가</>}</div>
 
               <form onSubmit={handleSubmit}>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -325,7 +326,7 @@ export default function PlanPage() {
                 </div>
 
                 <div className="input-group">
-                  <label className="input-label">📍 위치 / 장소</label>
+                  <label className="input-label"><MapPin size={16} /> 위치 / 장소</label>
                   <input
                     className="input"
                     value={form.location}
@@ -339,11 +340,11 @@ export default function PlanPage() {
                       className="btn btn-secondary btn-sm"
                       onClick={() => setShowPicker((v) => !v)}
                     >
-                      🗺️ {showPicker ? '지도 닫기' : '지도에서 위치 지정'}
+                      <Map size={16} /> {showPicker ? '지도 닫기' : '지도에서 위치 지정'}
                     </button>
                     {form.lat != null && form.lng != null && (
                       <span className="text-xs" style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>
-                        ✓ 위치 지정됨
+                        <Check size={16} /> 위치 지정됨
                       </span>
                     )}
                   </div>
@@ -357,7 +358,7 @@ export default function PlanPage() {
                 <p className="section-label">숙소 정보 (선택)</p>
 
                 <div className="input-group">
-                  <label className="input-label">🏨 숙소 이름</label>
+                  <label className="input-label"><Hotel size={16} /> 숙소 이름</label>
                   <input
                     className="input"
                     value={form.accommodation_name}
@@ -367,7 +368,7 @@ export default function PlanPage() {
                 </div>
 
                 <div className="input-group">
-                  <label className="input-label">🖼️ 숙소 이미지 링크 (URL)</label>
+                  <label className="input-label"><Image size={16} /> 숙소 이미지 링크 (URL)</label>
                   <input
                     className="input"
                     type="url"
@@ -391,7 +392,7 @@ export default function PlanPage() {
                 <div className="divider" />
 
                 <div className="input-group">
-                  <label className="input-label">📝 메모</label>
+                  <label className="input-label"><FileText size={16} /> 메모</label>
                   <textarea
                     className="input"
                     value={form.notes}
@@ -478,7 +479,7 @@ function PlanCard({ plan, expanded, onToggle, onEdit, onDelete, currentUser, mem
             <div className="plan-title">{plan.title}</div>
             {plan.location && (
               <div className="plan-location">
-                <span className="plan-location-dot">📍</span>
+                <span className="plan-location-dot"><MapPin size={14} /></span>
                 {plan.location}
               </div>
             )}
@@ -504,7 +505,7 @@ function PlanCard({ plan, expanded, onToggle, onEdit, onDelete, currentUser, mem
             <div className="plan-card-body-inner">
               {plan.accommodation_name && (
                 <div className="plan-accom">
-                  <span className="plan-accom-label">🏨 숙소</span>
+                  <span className="plan-accom-label"><Hotel size={14} /> 숙소</span>
                   <span className="plan-accom-name">{plan.accommodation_name}</span>
                 </div>
               )}
@@ -520,15 +521,15 @@ function PlanCard({ plan, expanded, onToggle, onEdit, onDelete, currentUser, mem
 
               {plan.notes && (
                 <div className="plan-notes">
-                  <span>📝</span>
+                  <span><FileText size={14} /></span>
                   <p>{plan.notes}</p>
                 </div>
               )}
 
               {canEdit && (
                 <div className="plan-actions">
-                  <button id={`plan-edit-${plan.id}`} className="btn btn-secondary btn-sm" onClick={onEdit}>✏️ 수정</button>
-                  <button id={`plan-del-${plan.id}`} className="btn btn-danger btn-sm" onClick={onDelete}>🗑️ 삭제</button>
+                  <button id={`plan-edit-${plan.id}`} className="btn btn-secondary btn-sm" onClick={onEdit}><Pencil size={16} /> 수정</button>
+                  <button id={`plan-del-${plan.id}`} className="btn btn-danger btn-sm" onClick={onDelete}><Trash2 size={16} /> 삭제</button>
                 </div>
               )}
             </div>

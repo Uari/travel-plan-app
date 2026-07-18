@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import QRCode from 'qrcode'
+import { UserPlus, Check, Link2, Share2 } from 'lucide-react'
 
 // 여행 초대: 공유 링크 + QR 코드
 export default function InviteSheet({ open, onClose, tripId }) {
@@ -63,7 +64,7 @@ export default function InviteSheet({ open, onClose, tripId }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-handle" />
-            <div className="modal-title">🤝 여행에 초대하기</div>
+            <div className="modal-title"><UserPlus size={20} /> 여행에 초대하기</div>
 
             <div className="invite-qr-wrap">
               {qr ? (
@@ -85,10 +86,10 @@ export default function InviteSheet({ open, onClose, tripId }) {
 
             <div className="invite-actions">
               <button className="btn btn-secondary btn-full" onClick={copyLink}>
-                {copied ? '✓ 복사됨' : '🔗 링크 복사'}
+                {copied ? <><Check size={16} /> 복사됨</> : <><Link2 size={16} /> 링크 복사</>}
               </button>
               <button className="btn btn-primary btn-full" onClick={share}>
-                📤 공유하기
+<Share2 size={16} /> 공유하기
               </button>
             </div>
           </motion.div>

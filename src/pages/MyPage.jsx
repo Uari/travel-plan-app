@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
+import { ArrowLeft, User, Sun, Moon, AlertTriangle } from 'lucide-react'
 import { changePassword, deleteAccount } from '../lib/authApi.js'
 import './MyPage.css'
 
@@ -79,7 +80,7 @@ export default function MyPage({ user, onLogout, theme, toggleTheme }) {
     <div className="mypage-container">
       <header className="mypage-header">
         <button className="back-btn" onClick={() => navigate(-1)}>
-          ← 뒤로가기
+          <ArrowLeft size={18} /> 뒤로가기
         </button>
         <h2>마이페이지</h2>
         <div style={{width: 60}}></div> {/* Spacer */}
@@ -87,7 +88,7 @@ export default function MyPage({ user, onLogout, theme, toggleTheme }) {
 
       <main className="mypage-content">
         <div className="mypage-profile">
-          <div className="profile-avatar">👤</div>
+          <div className="profile-avatar"><User size={40} /></div>
           <h3>{user.name}</h3>
           <p className="profile-id">ID: {user.id}</p>
         </div>
@@ -103,7 +104,7 @@ export default function MyPage({ user, onLogout, theme, toggleTheme }) {
               onClick={toggleTheme}
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.8rem' }}
             >
-              {theme === 'light' ? '☀️ 밝게' : '🌙 어둡게'}
+              {theme === 'light' ? <><Sun size={18} /> 밝게</> : <><Moon size={18} /> 어둡게</>}
             </button>
           </div>
         </div>
@@ -190,7 +191,7 @@ export default function MyPage({ user, onLogout, theme, toggleTheme }) {
               className="mypage-form"
             >
               <div className="warning-box">
-                ⚠️ 탈퇴 시 로그인할 수 없게 되며, 삭제된 계정은 복구할 수 없습니다. 기존 여행 데이터(유령 상태)는 방에 남게 됩니다.
+                <AlertTriangle size={16} /> 탈퇴 시 로그인할 수 없게 되며, 삭제된 계정은 복구할 수 없습니다. 기존 여행 데이터(유령 상태)는 방에 남게 됩니다.
               </div>
               <div className="input-group">
                 <label>본인 확인 (비밀번호)</label>

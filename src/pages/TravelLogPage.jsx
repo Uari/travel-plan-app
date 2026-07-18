@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ArrowLeft, BookOpen, Map, Calendar, Plane } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import { getCountry } from '../data/countries.js'
@@ -97,7 +98,7 @@ export default function TravelLogPage({ user }) {
     if (inCountry.length === 1) {
       navigate(`/travel-log/${inCountry[0].id}`)
     } else {
-      setPickList({ label: `${getCountry(code)?.emoji || '🌍'} ${getCountry(code)?.name || '해외'} 여행`, trips: inCountry })
+      setPickList({ label: `${getCountry(code)?.name || '해외'} 여행`, trips: inCountry })
     }
   }
 
@@ -107,35 +108,35 @@ export default function TravelLogPage({ user }) {
     if (inProv.length === 1) {
       navigate(`/travel-log/${inProv[0].id}`)
     } else {
-      setPickList({ label: `🇰🇷 ${prov} 여행`, trips: inProv })
+      setPickList({ label: `${prov} 여행`, trips: inProv })
     }
   }
 
   return (
     <div className="travellog-page">
       <header className="travellog-header">
-        <button className="back-btn" onClick={() => navigate('/lobby')}>← 로비</button>
-        <h2>📖 여행 로그</h2>
+        <button className="back-btn" onClick={() => navigate('/lobby')}><ArrowLeft size={18} /> 로비</button>
+        <h2><BookOpen size={24} /> 여행 로그</h2>
         <div style={{ width: 48 }} />
       </header>
 
       <main className="travellog-main">
         {loading ? (
           <div className="empty-state">
-            <div className="empty-icon" style={{ animation: 'floatLoading 1.5s ease-in-out infinite' }}>✈️</div>
+            <div className="empty-icon" style={{ animation: 'floatLoading 1.5s ease-in-out infinite' }}><Plane size={48} strokeWidth={1.5} /></div>
             <p>여행 기록을 불러오는 중...</p>
           </div>
         ) : logs.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">🗺️</div>
+            <div className="empty-icon"><Map size={48} strokeWidth={1.5} /></div>
             <p>아직 완료된 여행이 없어요.</p>
             <p>여행을 마치면 여기에 기록돼요!</p>
           </div>
         ) : (
           <>
             <div className="travellog-viewmode">
-              <button className={`tlvm-btn${viewMode === 'map' ? ' active' : ''}`} onClick={() => setViewMode('map')}>🗺️ 지도</button>
-              <button className={`tlvm-btn${viewMode === 'timeline' ? ' active' : ''}`} onClick={() => setViewMode('timeline')}>📅 타임라인</button>
+              <button className={`tlvm-btn${viewMode === 'map' ? ' active' : ''}`} onClick={() => setViewMode('map')}><Map size={16} /> 지도</button>
+              <button className={`tlvm-btn${viewMode === 'timeline' ? ' active' : ''}`} onClick={() => setViewMode('timeline')}><Calendar size={16} /> 타임라인</button>
             </div>
             {viewMode === 'map' ? (
           <div className="travellog-map-wrap">
@@ -159,7 +160,7 @@ export default function TravelLogPage({ user }) {
                   exit={{ opacity: 0, scale: 0.85 }}
                   transition={{ duration: 0.35, ease: 'easeInOut' }}
                 >
-                  <button className="travellog-map-back" onClick={() => setView('world')}>← 세계지도로</button>
+                  <button className="travellog-map-back" onClick={() => setView('world')}><ArrowLeft size={16} /> 세계지도로</button>
                   <KoreaLogMap visited={krVisited} onSelectProvince={openProvince} />
                   <p className="travellog-map-hint">도(道)의 다트를 눌러 여행 기록을 확인하세요 🎯</p>
                 </motion.div>

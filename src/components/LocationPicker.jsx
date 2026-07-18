@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { MapPin, Search } from 'lucide-react'
 import { searchPlaces } from '../lib/placeSearch.js'
 import './LocationPicker.css'
 
@@ -101,7 +102,7 @@ export default function LocationPicker({ lat, lng, onPick }) {
   return (
     <div className="loc-picker">
       <div className="loc-picker-guide">
-        <div className="loc-picker-guide-title">📍 위치 지정하는 법</div>
+        <div className="loc-picker-guide-title"><MapPin size={16} /> 위치 지정하는 법</div>
         <div className="loc-picker-guide-step">
           <span className="loc-picker-guide-num">1</span>
           검색란에 <b>동·지역명</b>을 입력해 지도를 그 근처로 이동
@@ -113,12 +114,13 @@ export default function LocationPicker({ lat, lng, onPick }) {
       </div>
 
       <div className="loc-picker-search">
+        <span className="loc-search-icon" style={{ display: 'inline-flex', alignItems: 'center' }}><Search size={16} /></span>
         <input
           className="input"
           value={query}
           onChange={(e) => handleQuery(e.target.value)}
           onFocus={() => { if (results.length) setOpen(true) }}
-          placeholder="🔍 동·지역명 검색 (예: 하안동, 해운대)"
+          placeholder="동·지역명 검색 (예: 하안동, 해운대)"
           autoComplete="off"
         />
         {open && (loading || results.length > 0) && (
@@ -126,7 +128,7 @@ export default function LocationPicker({ lat, lng, onPick }) {
             {loading && <li className="loc-search-loading">검색 중…</li>}
             {results.map((r, i) => (
               <li key={`${r.lat},${r.lng},${i}`} className="loc-search-item" onClick={() => pickResult(r)}>
-                <span className="loc-search-name">📍 {r.name}</span>
+                <span className="loc-search-name"><MapPin size={14} /> {r.name}</span>
                 {r.address && <span className="loc-search-addr">{r.address}</span>}
               </li>
             ))}

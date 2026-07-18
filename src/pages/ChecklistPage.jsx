@@ -6,9 +6,10 @@ import { useSupabaseQuery } from '../hooks/useSupabaseQuery.js'
 import { getDisplayName } from '../lib/tripMembers.js'
 import BottomSheetModal from '../components/BottomSheetModal.jsx'
 import ScrollToTopButton from '../components/ScrollToTopButton.jsx'
+import { Check, PartyPopper, Pencil, Plus, Plane, FileText, X } from 'lucide-react'
 import './ChecklistPage.css'
 
-const QUICK_ITEMS = ['👕 여벌 옷', '🔌 충전기', '💊 상비약', '🪥 세면도구', '📸 카메라', '☂️ 우산', '🏧 현금 환전', '🗺️ 지도 저장']
+const QUICK_ITEMS = ['여벌 옷', '충전기', '상비약', '세면도구', '카메라', '우산', '현금 환전', '지도 저장']
 
 export default function ChecklistPage() {
   const { user, tripId, membersMap, isAdmin, isCompleted } = useTripContext()
@@ -48,7 +49,7 @@ export default function ChecklistPage() {
 
   const openAddModal = (text = '') => {
     setEditId(null)
-    setForm({ item: text.replace(/^[^\s]*\s/, ''), assigned_to: [user.id] })
+    setForm({ item: text, assigned_to: [user.id] })
     setShowModal(true)
   }
 
@@ -163,7 +164,7 @@ export default function ChecklistPage() {
   return (
     <div className="checklist-page">
       <ScrollToTopButton />
-      <h2 className="page-title">준비물 체크리스트 ✅</h2>
+      <h2 className="page-title">준비물 체크리스트 <Check size={24} /></h2>
 
       {/* Progress */}
       <div className="progress-card card">
@@ -187,7 +188,7 @@ export default function ChecklistPage() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
           >
-            🎉 모든 준비 완료!
+            <PartyPopper size={20} /> 모든 준비 완료!
           </motion.div>
         )}
       </div>
@@ -216,7 +217,7 @@ export default function ChecklistPage() {
           <div className="quick-items-label section-label">빠른 추가</div>
           <div className="quick-items">
             {QUICK_ITEMS.map((q) => {
-              const exists = items.some((i) => i.item.includes(q.split(' ').slice(1).join(' ')))
+              const exists = items.some((i) => i.item.includes(q))
               return (
                 <button
                   key={q}
@@ -240,14 +241,14 @@ export default function ChecklistPage() {
       {/* Pending items */}
       {loading ? (
         <div className="empty-state">
-          <div className="empty-icon" style={{ animation: 'floatLoading 1.5s ease-in-out infinite' }}>✈️</div>
+          <div className="empty-icon" style={{ animation: 'floatLoading 1.5s ease-in-out infinite' }}><Plane size={48} strokeWidth={1.5} /></div>
           <p>여행 데이터를 불러오는 중...</p>
         </div>
       ) : (
         <div className="checklist-container">
           {pending.length === 0 && done.length === 0 && (
             <div className="empty-state">
-              <div className="empty-icon">📝</div>
+              <div className="empty-icon"><FileText size={48} strokeWidth={1.5} /></div>
               {mineOnly ? (
                 <p>내가 담당인 준비물이 없어요.</p>
               ) : (
@@ -305,7 +306,7 @@ export default function ChecklistPage() {
 
       {/* Add/Edit Modal */}
       <BottomSheetModal open={showModal} onClose={() => setShowModal(false)}>
-              <div className="modal-title">{editId ? '✏️ 준비물 수정' : '➕ 준비물 추가'}</div>
+              <div className="modal-title">{editId ? <><Pencil size={20} /> 준비물 수정</> : <><Plus size={20} /> 준비물 추가</>}</div>
 
               <form onSubmit={handleSubmit}>
                 <div className="input-group">
@@ -340,7 +341,7 @@ export default function ChecklistPage() {
                           }}
                           onClick={() => handleToggleAssignee(memberId)}
                         >
-                          {isAssigned ? '✓ ' : ''}{displayName}
+                          {isAssigned ? <><Check size={16} /> </> : ''}{displayName}
                         </button>
                       )
                     })}
@@ -395,7 +396,7 @@ function CheckItem({ item, currentUser, membersMap, isAdmin, onToggle, onEdit, o
               animate={{ scale: 1 }}
               transition={{ type: 'spring', stiffness: 400, damping: 15 }}
             >
-              ✓
+              <Check size={16} />
             </motion.span>
           )}
         </button>
@@ -418,7 +419,7 @@ function CheckItem({ item, currentUser, membersMap, isAdmin, onToggle, onEdit, o
                   border: hasChecked ? '1px solid rgba(90, 125, 95, 0.45)' : '1px solid transparent',
                   textDecoration: memberInfo?.is_deleted ? 'line-through' : 'none'
                 }}>
-                  {hasChecked ? '✅ ' : ''}{displayName}
+                  {hasChecked ? <><Check size={16} /> </> : ''}{displayName}
                 </span>
               )
             })}
@@ -427,8 +428,8 @@ function CheckItem({ item, currentUser, membersMap, isAdmin, onToggle, onEdit, o
       </div>
 
       <div style={{ display: 'flex', gap: '0.5rem' }}>
-        {canEdit && <button className="check-del-btn" style={{ fontSize: '1rem' }} onClick={onEdit}>✏️</button>}
-        {canEdit && <button className="check-del-btn" style={{ fontSize: '1.2rem' }} onClick={onDelete}>✕</button>}
+        {canEdit && <button className="check-del-btn" style={{ fontSize: '1rem' }} onClick={onEdit}><Pencil size={16} /></button>}
+        {canEdit && <button className="check-del-btn" style={{ fontSize: '1.2rem' }} onClick={onDelete}><X size={16} /></button>}
       </div>
     </motion.div>
   )

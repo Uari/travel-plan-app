@@ -482,6 +482,13 @@ textarea.input {
   font-weight: 600;
 }
 
+/* lucide-react 라인 아이콘 공통: 인라인 텍스트와 baseline 정렬 + 축소 방지.
+   (하단 네비/스크롤버튼 SVG는 .lucide 클래스가 없어 영향 없음) */
+svg.lucide {
+  vertical-align: -0.15em;
+  flex-shrink: 0;
+}
+
 /* ==========================================
    Tag / Badge
    ========================================== */

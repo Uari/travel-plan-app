@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { Check, PartyPopper } from 'lucide-react'
 import BottomSheetModal from './BottomSheetModal.jsx'
 import { SUPPORTED_COUNTRIES, KOREA_PROVINCES } from '../data/countries.js'
 import { KOREA_DISTRICTS } from '../data/koreaDistricts.js'
@@ -49,7 +50,7 @@ export default function TripCompleteModal({ open, onClose, onComplete, submittin
 
   return (
     <BottomSheetModal open={open} onClose={onClose}>
-      <div className="modal-title">✅ 여행 완료하기</div>
+      <div className="modal-title"><Check size={20} /> 여행 완료하기</div>
       <p className="text-sm text-muted" style={{ marginBottom: '1rem' }}>
         여행을 마무리하면 여행 로그에 기록됩니다. 다녀온 곳을 알려주세요.
       </p>
@@ -68,7 +69,7 @@ export default function TripCompleteModal({ open, onClose, onComplete, submittin
           >
             {SUPPORTED_COUNTRIES.map((c) => (
               <option key={c.code} value={c.code}>
-                {c.emoji} {c.name}
+                {c.name}
               </option>
             ))}
           </select>
@@ -142,7 +143,7 @@ export default function TripCompleteModal({ open, onClose, onComplete, submittin
             취소
           </button>
           <button type="submit" className="btn btn-primary" style={{ flex: 2 }} disabled={!canSubmit || submitting}>
-            {submitting ? '처리 중...' : '여행 완료 🎉'}
+            {submitting ? '처리 중...' : <><PartyPopper size={16} /> 여행 완료</>}
           </button>
         </div>
       </form>

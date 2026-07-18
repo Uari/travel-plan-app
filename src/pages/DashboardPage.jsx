@@ -8,6 +8,7 @@ import {
 } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useNavigate } from "react-router-dom";
+import { Pencil, Check, Ban, Calendar, Hotel, CalendarDays, Wallet, Users, Target, RefreshCw, Tag, X } from "lucide-react";
 import { KOREA_REGIONS } from "../data/regions.js";
 import KoreaMapSVG from "../components/KoreaMapSVG.jsx";
 import { supabase } from "../lib/supabase.js";
@@ -263,7 +264,7 @@ export default function DashboardPage() {
                   }}
                   title="방 이름 변경"
                 >
-                  ✏️
+                  <Pencil size={14} />
                 </button>
               )}
               {tripData?.is_completed && (
@@ -274,20 +275,21 @@ export default function DashboardPage() {
                     borderRadius: '999px', padding: '0.15rem 0.5rem', whiteSpace: 'nowrap'
                   }}
                 >
-                  ✅ 여행 완료
+                  <Check size={13} /> 여행 완료
                 </span>
               )}
             </div>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-              안녕하세요, <strong>{user.name}</strong> 님! 👋
+              안녕하세요, <strong>{user.name}</strong> 님!
             </p>
           </div>
           <button
             id="exclude-filter-btn"
             className="btn btn-secondary btn-sm"
             onClick={() => setShowExcludePanel(true)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
           >
-            🚫 제외 설정
+            <Ban size={14} /> 제외 설정
             {excludedRegions.length > 0 && (
               <span className="exclude-badge">{excludedRegions.length}</span>
             )}
@@ -297,7 +299,7 @@ export default function DashboardPage() {
         {/* Date Editor Row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '0.75rem 1rem', borderRadius: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
-            <span>📅 여행 시작일:</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}><Calendar size={15} /> 여행 시작일:</span>
             <strong style={{ color: tripData?.start_date ? 'var(--primary-color)' : 'var(--text-muted)' }}>
               {tripData?.start_date ? tripData.start_date : '미정 (클릭해서 설정)'}
             </strong>
@@ -321,32 +323,32 @@ export default function DashboardPage() {
           className="summary-cell dday"
           onClick={() => { setTempDate(tripData?.start_date || ''); setShowDateModal(true); }}
         >
-          <span className="summary-cell-label">📅 여행까지</span>
+          <span className="summary-cell-label"><Calendar size={13} /> 여행까지</span>
           <span className="summary-cell-value">{ddayLabel || '날짜 미정'}</span>
           <span className="summary-cell-sub">{tripData?.start_date || '클릭해서 설정'}</span>
         </button>
         <button className="summary-cell" onClick={() => goTab('accommodation')}>
-          <span className="summary-cell-label">🏨 확정 숙소</span>
+          <span className="summary-cell-label"><Hotel size={13} /> 확정 숙소</span>
           <span className="summary-cell-value">{summary?.accSelected || '미정'}</span>
           <span className="summary-cell-sub">후보 {summary?.accCount ?? 0}곳</span>
         </button>
         <button className="summary-cell" onClick={() => goTab('plan')}>
-          <span className="summary-cell-label">🗓️ 일정</span>
+          <span className="summary-cell-label"><CalendarDays size={13} /> 일정</span>
           <span className="summary-cell-value">{summary?.planCount ?? 0}개</span>
           <span className="summary-cell-sub">{summary?.firstPlan?.title || '아직 없음'}</span>
         </button>
         <button className="summary-cell" onClick={() => goTab('expense')}>
-          <span className="summary-cell-label">💰 총비용</span>
+          <span className="summary-cell-label"><Wallet size={13} /> 총비용</span>
           <span className="summary-cell-value">{(summary?.totalExpense ?? 0).toLocaleString()}원</span>
           <span className="summary-cell-sub">1인당 {perPerson.toLocaleString()}원</span>
         </button>
         <button className="summary-cell" onClick={() => goTab('checklist')}>
-          <span className="summary-cell-label">✅ 준비물</span>
+          <span className="summary-cell-label"><Check size={13} /> 준비물</span>
           <span className="summary-cell-value">{clPct}%</span>
           <span className="summary-cell-sub">{summary?.clDone ?? 0}/{summary?.clTotal ?? 0} 완료</span>
         </button>
         <div className="summary-cell static">
-          <span className="summary-cell-label">👥 멤버</span>
+          <span className="summary-cell-label"><Users size={13} /> 멤버</span>
           <span className="summary-cell-value">{memberCount}명</span>
           <span className="summary-cell-sub">함께하는 여행</span>
         </div>
@@ -354,7 +356,7 @@ export default function DashboardPage() {
 
       {/* 여행지 랜덤 추천 (보조 기능, 접이식) */}
       <button className="dart-section-toggle" onClick={() => setDartOpen((o) => !o)}>
-        <span>🎯 여행지 랜덤으로 정하기</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}><Target size={16} /> 여행지 랜덤으로 정하기</span>
         <span className="dart-section-chevron">{dartOpen ? '▲' : '▼'}</span>
       </button>
 
@@ -391,10 +393,10 @@ export default function DashboardPage() {
                 <button
                   id="result-reset-btn"
                   className="btn btn-secondary btn-sm"
-                  style={{ marginTop: "0.75rem" }}
                   onClick={resetDart}
+                  style={{ marginTop: "0.75rem", display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
                 >
-                  다시 뽑기 🔄
+                  다시 뽑기 <RefreshCw size={14} />
                 </button>
               </motion.div>
             )}
@@ -480,7 +482,7 @@ export default function DashboardPage() {
 
       {/* Date Editor Modal */}
       <BottomSheetModal open={showDateModal} onClose={() => setShowDateModal(false)}>
-              <div className="modal-title">📅 여행 시작일 설정</div>
+              <div className="modal-title"><Calendar size={20} /> 여행 시작일 설정</div>
               <form onSubmit={handleUpdateDate}>
                 <div className="input-group">
                   <label className="input-label">출발 날짜</label>
@@ -501,7 +503,7 @@ export default function DashboardPage() {
 
       {/* Name Editor Modal */}
       <BottomSheetModal open={showNameModal} onClose={() => setShowNameModal(false)}>
-              <div className="modal-title">🏷️ 여행 방 이름 변경</div>
+              <div className="modal-title"><Tag size={20} /> 여행 방 이름 변경</div>
               <form onSubmit={handleUpdateName}>
                 <div className="input-group">
                   <label className="input-label">방 이름</label>
@@ -523,7 +525,7 @@ export default function DashboardPage() {
 
       {/* Exclude Panel Modal */}
       <BottomSheetModal open={showExcludePanel} onClose={() => setShowExcludePanel(false)}>
-              <div className="modal-title">🚫 제외할 지역 선택</div>
+              <div className="modal-title"><Ban size={20} /> 제외할 지역 선택</div>
               <p
                 className="text-sm text-muted"
                 style={{ marginBottom: "1rem" }}
@@ -550,7 +552,7 @@ export default function DashboardPage() {
                         </span>
                       </div>
                       <span className="exclude-check">
-                        {isExcluded ? "✗" : "✓"}
+                        {isExcluded ? <X size={16} /> : <Check size={16} />}
                       </span>
                     </button>
                   );
