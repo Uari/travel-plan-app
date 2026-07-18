@@ -1,0 +1,145 @@
+.loc-picker {
+  margin-top: 0.5rem;
+}
+
+/* 위치 지정 안내 박스 */
+.loc-picker-guide {
+  background: rgba(193, 114, 63, 0.08);
+  border: 1px solid rgba(193, 114, 63, 0.22);
+  border-radius: var(--radius-md);
+  padding: 0.7rem 0.85rem;
+  margin-bottom: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.loc-picker-guide-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--accent-secondary);
+  margin-bottom: 0.1rem;
+}
+
+.loc-picker-guide-step {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.loc-picker-guide-step b {
+  color: var(--text-primary);
+}
+
+.loc-picker-guide-num {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent-secondary);
+  color: #fbfaf4;
+  font-size: 0.68rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 피커 내 검색창 + 결과 드롭다운 */
+.loc-picker-search {
+  position: relative;
+  margin-bottom: 0.5rem;
+}
+
+.loc-search-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  list-style: none;
+  margin: 0;
+  padding: 0.3rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(56, 50, 32, 0.18);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.loc-search-loading {
+  padding: 0.6rem 0.7rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.loc-search-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.loc-search-item:hover {
+  background: var(--bg-elevated);
+}
+
+.loc-search-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.loc-search-addr {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.loc-picker-map {
+  height: 240px;
+  width: 100%;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-soft);
+  z-index: 0;
+  cursor: crosshair;
+}
+
+.loc-picker-map .leaflet-container {
+  font-family: var(--font-base);
+}
+
+.loc-picker-hint {
+  margin-top: 0.4rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* 클릭 핀 (테라코타 물방울) */
+.loc-pick-pin {
+  background: transparent;
+  border: none;
+}
+
+.loc-pick-pin-inner {
+  width: 22px;
+  height: 22px;
+  border-radius: 50% 50% 50% 0;
+  background: #c1723f;
+  transform: rotate(-45deg);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  border: 2px solid #fbfaf4;
+  margin: 3px;
+}

@@ -7,7 +7,9 @@ import { getDisplayName, canEditItem } from '../lib/tripMembers.js'
 import BottomSheetModal from '../components/BottomSheetModal.jsx'
 import ScrollToTopButton from '../components/ScrollToTopButton.jsx'
 import PlanDayMap from '../components/PlanDayMap.jsx'
+import LocationPicker from '../components/LocationPicker.jsx'
 import { geocode } from '../lib/geocode.js'
+import { reverseGeocode } from '../lib/placeSearch.js'
 import './PlanPage.css'
 
 export default function PlanPage() {
@@ -20,6 +22,20 @@ export default function PlanPage() {
   const [editItem, setEditItem] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
   const [openMapDays, setOpenMapDays] = useState({}) // { [dayLabel]: true }
+  const [showPicker, setShowPicker] = useState(false) // 지도 클릭 위치 지정 열림
+
+  // 지도 위치 지정 → 좌표 확정.
+  //  - 검색에서 고른 경우(label 있음): 위치 텍스트를 그 이름으로 채움
+  //  - 지도 직접 클릭(label 없음): 위치 텍스트가 비어있으면 역지오코딩으로 이름 채움
+  const handleMapPick = async ({ lat, lng, label }) => {
+    setForm((prev) => ({ ...prev, lat, lng, ...(label ? { location: label } : {}) }))
+    if (!label) {
+      const rev = await reverseGeocode(lat, lng)
+      if (rev) {
+        setForm((prev) => (prev.location && prev.location.trim() ? prev : { ...prev, location: rev }))
+      }
+    }
+  }
 
   const [form, setForm] = useState({
     day_label: 'Day 1',
@@ -33,12 +49,14 @@ export default function PlanPage() {
 
   const openAdd = () => {
     setEditItem(null)
+    setShowPicker(false)
     setForm({ day_label: 'Day 1', time_label: '', title: '', location: '', accommodation_name: '', accommodation_img_url: '', notes: '' })
     setShowModal(true)
   }
 
   const openEdit = (plan) => {
     setEditItem(plan)
+    setShowPicker(false)
     setForm({ ...plan })
     setShowModal(true)
   }
@@ -47,9 +65,13 @@ export default function PlanPage() {
     e.preventDefault()
     if (!form.title.trim()) return
 
-    // 장소가 있으면 좌표를 지오코딩(지도 핀용). 실패하면 기존 좌표 유지, 장소가 비면 좌표 제거.
+    // 좌표 결정(지도 핀용):
+    // 1) 검색으로 장소를 고른 경우 그 좌표를 그대로 사용
+    // 2) 장소를 직접 타이핑만 한 경우 저장 시 지오코딩으로 폴백
     let coords = null
-    if (form.location && form.location.trim()) {
+    if (form.lat != null && form.lng != null) {
+      coords = { lat: form.lat, lng: form.lng }
+    } else if (form.location && form.location.trim()) {
       coords = await geocode(form.location.trim())
     }
 
@@ -307,9 +329,28 @@ export default function PlanPage() {
                   <input
                     className="input"
                     value={form.location}
-                    onChange={(e) => setForm({ ...form, location: e.target.value })}
-                    placeholder="예: 강릉 안목해변"
+                    onChange={(e) => setForm({ ...form, location: e.target.value, lat: null, lng: null })}
+                    placeholder="장소명 (지도에서 지정하면 자동 입력)"
                   />
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.45rem' }}>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => setShowPicker((v) => !v)}
+                    >
+                      🗺️ {showPicker ? '지도 닫기' : '지도에서 위치 지정'}
+                    </button>
+                    {form.lat != null && form.lng != null && (
+                      <span className="text-xs" style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>
+                        ✓ 위치 지정됨
+                      </span>
+                    )}
+                  </div>
+
+                  {showPicker && (
+                    <LocationPicker lat={form.lat} lng={form.lng} onPick={handleMapPick} />
+                  )}
                 </div>
 
                 <div className="divider" />
