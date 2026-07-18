@@ -10,7 +10,7 @@ import './AccommodationPage.css'
 
 export default function AccommodationPage() {
   const { user, tripId, membersMap, isAdmin, isCompleted } = useTripContext()
-  const { data: fetchedAccommodations, loading, refetch: loadAccommodations } = useSupabaseQuery(
+  const { data: fetchedAccommodations, loading, refetch: loadAccommodations, setData: setAccommodations } = useSupabaseQuery(
     () => supabase.from('accommodations').select('*').eq('trip_id', tripId).order('created_at', { ascending: true }),
     [tripId]
   )
@@ -169,7 +169,7 @@ export default function AccommodationPage() {
     const hasVotedID = currentVotes.includes(user.id)
     const hasVotedName = currentVotes.includes(user.name)
     const hasVoted = hasVotedID || hasVotedName
-    
+
     let newVotes
     if (hasVoted) {
       newVotes = currentVotes.filter((v) => v !== user.id && v !== user.name)
@@ -177,12 +177,23 @@ export default function AccommodationPage() {
       newVotes = [...currentVotes, user.id]
     }
 
+    // 1) 낙관적 업데이트: 서버 왕복을 기다리지 않고 로컬 목록만 즉시 갱신한다.
+    //    → useMemo 정렬이 곧바로 재계산되고 motion.div의 layout 애니메이션이
+    //      카드 위치만 부드럽게 이동시킨다(스크롤/화면은 그대로 유지).
+    setAccommodations((prev) =>
+      prev.map((a) => (a.id === acc.id ? { ...a, votes: newVotes } : a))
+    )
+
+    // 2) DB 동기화는 백그라운드로. 실패했을 때만 서버 상태로 되돌린다.
     const { error } = await supabase
       .from('accommodations')
       .update({ votes: newVotes })
       .eq('id', acc.id)
 
-    if (!error) loadAccommodations()
+    if (error) {
+      console.error(error)
+      loadAccommodations() // 실패 시 서버 기준으로 복구
+    }
   }
 
   const selectAccommodation = async (id) => {
@@ -234,6 +245,7 @@ export default function AccommodationPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 layout
+                transition={{ layout: { duration: 0.4, ease: [0.4, 0, 0.2, 1] } }}
               >
                 {acc.is_selected && (
                   <div className="acc-badge-selected">✨ 최종 확정 숙소 ✨</div>

@@ -48,5 +48,7 @@ export function useSupabaseQuery(queryFn, deps) {
     refetch()
   }, [refetch])
 
-  return { data, loading, error, refetch }
+  // setData: 낙관적 업데이트용. 서버 왕복을 기다리지 않고 로컬 목록을 즉시 바꿔
+  // 리스트가 부드럽게(layout 애니메이션) 재배치되도록 한다.
+  return { data, loading, error, refetch, setData }
 }
