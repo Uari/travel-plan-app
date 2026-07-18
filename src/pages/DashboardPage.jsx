@@ -17,10 +17,8 @@ import "./DashboardPage.css";
 
 export default function DashboardPage() {
   const { user, tripId, tripData, setTripData } = useTripContext();
-  const [excludedRegions, setExcludedRegions] = useState(() => {
-    const saved = localStorage.getItem("travelplan_excluded");
-    return saved ? JSON.parse(saved) : [];
-  });
+  // 제외 지역: 여행(trip)별 + 팀 공유 (DB의 excluded_regions 테이블)
+  const [excludedRegions, setExcludedRegions] = useState([]);
   const [showExcludePanel, setShowExcludePanel] = useState(false);
   const [result, setResult] = useState(null);
   const [dartState, setDartState] = useState("idle"); // idle | flying | landed
@@ -47,6 +45,20 @@ export default function DashboardPage() {
     const timer = setTimeout(() => setMapLoaded(true), 150);
     return () => clearTimeout(timer);
   }, []);
+
+  // 제외 지역 로드 (여행별, 팀 공유)
+  const loadExcluded = async () => {
+    const { data, error } = await supabase
+      .from("excluded_regions")
+      .select("region_id")
+      .eq("trip_id", tripId);
+    if (!error && data) setExcludedRegions(data.map((r) => r.region_id));
+  };
+
+  useEffect(() => {
+    if (tripId) loadExcluded();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tripId]);
 
   useEffect(() => {
     if (!tripId) return;
@@ -133,14 +145,34 @@ export default function DashboardPage() {
     (r) => !excludedRegions.includes(r.id),
   );
 
-  const toggleExclude = (id) => {
-    setExcludedRegions((prev) => {
-      const next = prev.includes(id)
-        ? prev.filter((x) => x !== id)
-        : [...prev, id];
-      localStorage.setItem("travelplan_excluded", JSON.stringify(next));
-      return next;
-    });
+  const toggleExclude = async (id) => {
+    const isExcluded = excludedRegions.includes(id);
+    // 낙관적 업데이트(즉시 반영)
+    setExcludedRegions((prev) =>
+      isExcluded ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+    if (isExcluded) {
+      const { error } = await supabase
+        .from("excluded_regions")
+        .delete()
+        .match({ trip_id: tripId, region_id: id });
+      if (error) {
+        console.error(error);
+        loadExcluded(); // 실패 시 서버 기준 복구
+      }
+    } else {
+      const region = KOREA_REGIONS.find((r) => r.id === id);
+      const { error } = await supabase.from("excluded_regions").insert({
+        trip_id: tripId,
+        region_id: id,
+        region_name: region?.name || null,
+        created_by: user.id,
+      });
+      if (error) {
+        console.error(error);
+        loadExcluded();
+      }
+    }
   };
 
   const throwDart = useCallback(
