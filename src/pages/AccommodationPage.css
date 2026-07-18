@@ -25,6 +25,37 @@
   font-size: 0.92rem;
 }
 
+/* 정렬 세그먼트 */
+.acc-sort {
+  display: inline-flex;
+  gap: 0.25rem;
+  margin-bottom: 1.25rem;
+  padding: 0.25rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+}
+
+.acc-sort-btn {
+  padding: 0.4rem 0.9rem;
+  border-radius: var(--radius-full);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: var(--font-base);
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+
+.acc-sort-btn.active {
+  background: var(--accent-primary);
+  color: #fbfaf4;
+  box-shadow: var(--shadow-soft);
+}
+
 .accommodation-list {
   display: grid;
   grid-template-columns: 1fr;

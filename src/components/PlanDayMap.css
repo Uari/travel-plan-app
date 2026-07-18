@@ -1,0 +1,64 @@
+.plan-day-map-wrap {
+  position: relative;
+  margin-bottom: 0.75rem;
+}
+
+.plan-day-map {
+  height: 220px;
+  width: 100%;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-soft);
+  z-index: 0;
+}
+
+/* Leaflet 기본 폰트를 앱 폰트로 */
+.plan-day-map .leaflet-container {
+  font-family: var(--font-base);
+}
+
+/* 번호 핀 (테라코타) */
+.plan-pin {
+  background: transparent;
+  border: none;
+}
+
+.plan-pin-inner {
+  width: 26px;
+  height: 26px;
+  border-radius: 50% 50% 50% 0;
+  background: #c1723f;
+  color: #fbfaf4;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-45deg);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  border: 2px solid #fbfaf4;
+}
+
+/* 숫자만 정방향으로 회전 보정 */
+.plan-pin-inner > span {
+  transform: rotate(45deg);
+  line-height: 1;
+}
+
+.plan-day-map-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--bg-surface) 82%, transparent);
+  border-radius: var(--radius-md);
+  pointer-events: none;
+  padding: 1rem;
+}

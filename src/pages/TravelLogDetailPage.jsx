@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase.js'
 import { getCountry } from '../data/countries.js'
 import { getDisplayName } from '../lib/tripMembers.js'
 import { compressImage } from '../lib/imageCompress.js'
+import { toPng } from 'html-to-image'
 import './TravelLogDetailPage.css'
 
 const MAX_PHOTOS = 10
@@ -26,6 +27,8 @@ export default function TravelLogDetailPage({ user }) {
   const [uploading, setUploading] = useState(false)
   const [viewerIndex, setViewerIndex] = useState(null) // 라이트박스로 크게 볼 사진 index
   const touchStartX = useRef(null)
+  const shareRef = useRef(null)
+  const [sharing, setSharing] = useState(false)
 
   useEffect(() => {
     loadAll()
@@ -124,6 +127,44 @@ export default function TravelLogDetailPage({ user }) {
     const country = getCountry(trip.country_code)
     if (trip.country_code === 'KR') return `🇰🇷 ${trip.region_label || trip.region_province || '대한민국'}`
     return `${country?.emoji || '🌍'} ${country?.name || '해외'}${trip.destination_label ? ` · ${trip.destination_label}` : ''}`
+  }
+
+  // 여행 요약을 이미지 카드(PNG)로 만들어 공유/저장
+  const handleShare = async () => {
+    if (!shareRef.current || sharing) return
+    setSharing(true)
+    const node = shareRef.current
+    const opts = { cacheBust: true, pixelRatio: 2, backgroundColor: '#3f5a47' }
+    try {
+      let dataUrl
+      try {
+        dataUrl = await toPng(node, opts)
+      } catch {
+        // 커버 사진 CORS 등으로 실패하면 사진 없이 재시도
+        const img = node.querySelector('.share-cover-img')
+        if (img) img.style.display = 'none'
+        dataUrl = await toPng(node, opts)
+        if (img) img.style.display = ''
+      }
+
+      const fileName = `${(trip?.name || 'travel').replace(/\s+/g, '_')}.png`
+      const blob = await (await fetch(dataUrl)).blob()
+      const file = new File([blob], fileName, { type: 'image/png' })
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: trip?.name || '여행 기록', text: `${placeLabel()} 여행 기록 ✈️` })
+      } else {
+        const a = document.createElement('a')
+        a.href = dataUrl
+        a.download = fileName
+        a.click()
+      }
+    } catch (e) {
+      console.error(e)
+      alert('이미지 생성에 실패했어요. 잠시 후 다시 시도해주세요.')
+    } finally {
+      setSharing(false)
+    }
   }
 
   const handleUpload = async (e) => {
@@ -247,6 +288,9 @@ export default function TravelLogDetailPage({ user }) {
         style={coverPhoto ? { backgroundImage: `url(${coverPhoto.url})` } : undefined}
       >
         <button className="tld-back" onClick={() => navigate('/travel-log')} aria-label="뒤로">←</button>
+        <button className="tld-share" onClick={handleShare} disabled={sharing} aria-label="공유">
+          {sharing ? '…' : '📤'}
+        </button>
         <div className="tld-hero-overlay">
           <span className="tld-hero-place">{placeLabel()}</span>
           <h1 className="tld-hero-title">{trip.name}</h1>
@@ -389,6 +433,26 @@ export default function TravelLogDetailPage({ user }) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* 공유용 이미지 카드 (화면 밖, 캡처 전용) */}
+      <div ref={shareRef} className="tld-share-card" aria-hidden>
+        {coverPhoto && (
+          <img className="share-cover-img" crossOrigin="anonymous" src={coverPhoto.url} alt="" />
+        )}
+        <div className="share-card-body">
+          <div className="share-place">{placeLabel()}</div>
+          <div className="share-name">{trip.name}</div>
+          {trip.start_date && <div className="share-date">📅 {trip.start_date}</div>}
+          <div className="share-stats">
+            <div><b>{summary.total.toLocaleString()}</b><span>총지출(원)</span></div>
+            <div><b>{summary.perPerson.toLocaleString()}</b><span>1인당(원)</span></div>
+            <div><b>{photos.length}</b><span>사진</span></div>
+            <div><b>{summary.days.length}</b><span>일정일</span></div>
+          </div>
+          {trip.review_note && <div className="share-review">“{trip.review_note}”</div>}
+          <div className="share-foot">여행플랜 ✈️</div>
+        </div>
+      </div>
     </div>
   )
 }

@@ -13,6 +13,7 @@ export default function TravelLogPage({ user }) {
   const [loading, setLoading] = useState(true)
   const [pickList, setPickList] = useState(null) // 같은 국가/도에 여행 여러 개일 때 선택 목록
   const [view, setView] = useState('world') // 'world' | 'korea'
+  const [viewMode, setViewMode] = useState('map') // 'map' | 'timeline'
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -72,6 +73,19 @@ export default function TravelLogPage({ user }) {
     return counts
   }, [logs])
 
+  // 연도별 그룹 (타임라인용)
+  const byYear = useMemo(() => {
+    const groups = {}
+    logs.forEach((t) => {
+      const dateStr = t.completed_at || t.start_date || ''
+      const year = dateStr ? new Date(dateStr).getFullYear() : '기타'
+      if (!groups[year]) groups[year] = []
+      groups[year].push(t)
+    })
+    return groups
+  }, [logs])
+  const years = Object.keys(byYear).sort((a, b) => String(b).localeCompare(String(a)))
+
   const openCountry = (code) => {
     // 대한민국은 상세지도(레벨 2)로 줌인
     if (code === 'KR') {
@@ -118,6 +132,12 @@ export default function TravelLogPage({ user }) {
             <p>여행을 마치면 여기에 기록돼요!</p>
           </div>
         ) : (
+          <>
+            <div className="travellog-viewmode">
+              <button className={`tlvm-btn${viewMode === 'map' ? ' active' : ''}`} onClick={() => setViewMode('map')}>🗺️ 지도</button>
+              <button className={`tlvm-btn${viewMode === 'timeline' ? ' active' : ''}`} onClick={() => setViewMode('timeline')}>📅 타임라인</button>
+            </div>
+            {viewMode === 'map' ? (
           <div className="travellog-map-wrap">
             <AnimatePresence mode="wait">
               {view === 'world' ? (
@@ -146,6 +166,27 @@ export default function TravelLogPage({ user }) {
               )}
             </AnimatePresence>
           </div>
+            ) : (
+              <div className="travellog-timeline">
+                {years.map((y) => (
+                  <div key={y} className="tl-year">
+                    <div className="tl-year-label">{y}{y !== '기타' ? '년' : ''}</div>
+                    <div className="tl-year-list">
+                      {byYear[y].map((t) => (
+                        <button key={t.id} className="tl-card" onClick={() => navigate(`/travel-log/${t.id}`)}>
+                          <span className="tl-card-name">{t.name}</span>
+                          <span className="tl-card-meta">
+                            {(t.region_label || t.destination_label) && <span>{t.region_label || t.destination_label}</span>}
+                            {t.completed_at && <span> · {String(t.completed_at).slice(0, 10)}</span>}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </main>
 

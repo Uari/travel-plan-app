@@ -1,14 +1,114 @@
 .dashboard-page {
   padding: 1.25rem 1rem;
-  padding-bottom: calc(var(--nav-height) + 1rem);
+  padding-bottom: calc(var(--nav-height) + 1.5rem);
   max-width: 600px;
   margin: 0 auto;
-  flex: 1;
   display: flex;
   flex-direction: column;
   width: 100%;
-  min-height: 0;
+}
+
+/* 여행 요약 대시보드 */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.7rem;
+  margin: 1rem 0 1.1rem;
+}
+
+.summary-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-soft);
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-base);
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  min-width: 0;
+}
+
+.summary-cell:not(.static):active {
+  transform: scale(0.98);
+}
+
+.summary-cell:not(.static):hover {
+  border-color: var(--border-active);
+  box-shadow: var(--shadow-card);
+}
+
+.summary-cell.static {
+  cursor: default;
+}
+
+/* D-day 카드는 강조 (세이지 필) */
+.summary-cell.dday {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+.summary-cell.dday .summary-cell-label,
+.summary-cell.dday .summary-cell-sub {
+  color: rgba(251, 250, 244, 0.85);
+}
+.summary-cell.dday .summary-cell-value {
+  color: #fbfaf4;
+}
+
+.summary-cell-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.summary-cell-value {
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.summary-cell-sub {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 다트(여행지 랜덤 추천) 접이식 토글 */
+.dart-section-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.1rem;
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-family: var(--font-base);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.dart-section-toggle:hover {
+  border-color: var(--accent-secondary);
+  color: var(--accent-secondary);
+}
+
+.dart-section-chevron {
+  font-size: 0.7rem;
+  opacity: 0.7;
 }
 
 /* Header */
@@ -54,12 +154,13 @@
 }
 
 .map-and-dart-container {
-  flex: 1;
   display: flex;
   flex-direction: column;
   position: relative;
-  min-height: 0;
-  max-height: calc(100dvh - 220px);
+  height: 56vh;
+  min-height: 380px;
+  max-height: 560px;
+  margin-top: 0.75rem;
 }
 
 /* Map */

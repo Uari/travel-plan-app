@@ -52,6 +52,36 @@
   color: var(--accent-emerald);
 }
 
+/* 담당자 필터 세그먼트 */
+.checklist-filter {
+  display: inline-flex;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  padding: 0.25rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+}
+
+.cl-filter-btn {
+  padding: 0.4rem 1rem;
+  border-radius: var(--radius-full);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: var(--font-base);
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.cl-filter-btn.active {
+  background: var(--accent-primary);
+  color: #fbfaf4;
+  box-shadow: var(--shadow-soft);
+}
+
 /* Quick items */
 .quick-items-label {
   margin-bottom: 0.5rem;

@@ -1,22 +1,25 @@
 import React, { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion'
 import { supabase } from '../lib/supabase.js'
 import { useTripContext } from '../context/TripContext.jsx'
 import { useSupabaseQuery } from '../hooks/useSupabaseQuery.js'
 import { getDisplayName, canEditItem } from '../lib/tripMembers.js'
 import BottomSheetModal from '../components/BottomSheetModal.jsx'
 import ScrollToTopButton from '../components/ScrollToTopButton.jsx'
+import PlanDayMap from '../components/PlanDayMap.jsx'
+import { geocode } from '../lib/geocode.js'
 import './PlanPage.css'
 
 export default function PlanPage() {
   const { user, tripId, membersMap, isAdmin, tripData, isCompleted } = useTripContext()
-  const { data: plans, loading, refetch: loadPlans } = useSupabaseQuery(
+  const { data: plans, loading, refetch: loadPlans, setData: setPlans } = useSupabaseQuery(
     () => supabase.from('plans').select('*').eq('trip_id', tripId).order('day_label').order('time_label'),
     [tripId]
   )
   const [showModal, setShowModal] = useState(false)
   const [editItem, setEditItem] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
+  const [openMapDays, setOpenMapDays] = useState({}) // { [dayLabel]: true }
 
   const [form, setForm] = useState({
     day_label: 'Day 1',
@@ -44,11 +47,24 @@ export default function PlanPage() {
     e.preventDefault()
     if (!form.title.trim()) return
 
-    const payload = { 
-      ...form, 
+    // 장소가 있으면 좌표를 지오코딩(지도 핀용). 실패하면 기존 좌표 유지, 장소가 비면 좌표 제거.
+    let coords = null
+    if (form.location && form.location.trim()) {
+      coords = await geocode(form.location.trim())
+    }
+
+    const payload = {
+      ...form,
       created_by: user.name, // Legacy
       user_id: user.id,      // New ID
-      trip_id: tripId 
+      trip_id: tripId
+    }
+    if (!form.location || !form.location.trim()) {
+      payload.lat = null
+      payload.lng = null
+    } else if (coords) {
+      payload.lat = coords.lat
+      payload.lng = coords.lng
     }
 
     if (editItem) {
@@ -60,7 +76,12 @@ export default function PlanPage() {
       }
       await loadPlans()
     } else {
-      const { error } = await supabase.from('plans').insert(payload)
+      // 새 일정은 해당 Day의 맨 뒤 순서로 붙인다
+      const dayKey = form.day_label || 'Day 1'
+      const nextOrder = plans
+        .filter((p) => (p.day_label || 'Day 1') === dayKey)
+        .reduce((m, p) => Math.max(m, p.sort_order || 0), 0) + 1
+      const { error } = await supabase.from('plans').insert({ ...payload, sort_order: nextOrder })
       if (error) {
         console.error(error)
         alert('일정 추가에 실패했습니다. 다시 시도해주세요.')
@@ -69,6 +90,23 @@ export default function PlanPage() {
       await loadPlans()
     }
     setShowModal(false)
+  }
+
+  // 드래그로 같은 Day 안 순서 변경 → 낙관적 반영 + DB 저장
+  const handleReorder = (dayKey, newOrder) => {
+    const updated = newOrder.map((p, i) => ({ ...p, sort_order: i + 1 }))
+    const byId = new Map(updated.map((p) => [p.id, p]))
+    // 1) 즉시 로컬 반영(부드러운 재배치)
+    setPlans((prev) => prev.map((p) => byId.get(p.id) || p))
+    // 2) DB 저장(백그라운드), 실패 시 서버 기준 복구
+    Promise.all(
+      updated.map((p) => supabase.from('plans').update({ sort_order: p.sort_order }).eq('id', p.id))
+    ).then((results) => {
+      if (results.some((r) => r.error)) {
+        console.error('일정 순서 저장 실패', results.find((r) => r.error)?.error)
+        loadPlans()
+      }
+    })
   }
 
   const handleDelete = async (id) => {
@@ -81,6 +119,33 @@ export default function PlanPage() {
     await loadPlans()
   }
 
+  // 지도 열기/닫기. 열 때, 장소는 있는데 좌표가 없는 일정들을 지오코딩해 채운다.
+  const toggleMap = (day) => {
+    const willOpen = !openMapDays[day]
+    setOpenMapDays((prev) => ({ ...prev, [day]: willOpen }))
+    if (willOpen) ensureDayCoords(day)
+  }
+
+  const ensureDayCoords = async (day) => {
+    const targets = (grouped[day] || []).filter(
+      (p) => p.location && p.location.trim() && (p.lat == null || p.lng == null)
+    )
+    // Nominatim 정책상 순차 호출(초당 1회 수준)
+    for (const p of targets) {
+      const c = await geocode(p.location.trim())
+      if (c) {
+        setPlans((prev) =>
+          prev.map((x) => (x.id === p.id ? { ...x, lat: c.lat, lng: c.lng } : x))
+        )
+        supabase
+          .from('plans')
+          .update({ lat: c.lat, lng: c.lng })
+          .eq('id', p.id)
+          .then(({ error }) => { if (error) console.error(error) })
+      }
+    }
+  }
+
   // Group by day
   const grouped = plans.reduce((acc, plan) => {
     const key = plan.day_label || 'Day 1'
@@ -88,6 +153,19 @@ export default function PlanPage() {
     acc[key].push(plan)
     return acc
   }, {})
+
+  // 각 Day 안에서 sort_order(수동 정렬) 우선, 없으면 시간→생성순으로 폴백
+  Object.keys(grouped).forEach((k) => {
+    grouped[k].sort((a, b) => {
+      const sa = a.sort_order ?? Infinity
+      const sb = b.sort_order ?? Infinity
+      if (sa !== sb) return sa - sb
+      return (
+        (a.time_label || '').localeCompare(b.time_label || '') ||
+        (a.created_at || '').localeCompare(b.created_at || '')
+      )
+    })
+  })
 
   const days = Object.keys(grouped).sort()
 
@@ -133,21 +211,55 @@ export default function PlanPage() {
               <div className="day-label-row">
                 <span className="day-label-badge">{day}{calculateDateString(day)}</span>
                 <div className="day-label-line" />
+                <button
+                  type="button"
+                  className={`day-map-toggle${openMapDays[day] ? ' active' : ''}`}
+                  onClick={() => toggleMap(day)}
+                >
+                  🗺️ {openMapDays[day] ? '지도 닫기' : '지도'}
+                </button>
               </div>
-              {grouped[day].map((plan) => (
-                <PlanCard
-                  key={plan.id}
-                  plan={plan}
-                  expanded={expandedId === plan.id}
-                  membersMap={membersMap}
-                  isAdmin={isAdmin}
-                  onToggle={() => setExpandedId(expandedId === plan.id ? null : plan.id)}
-                  onEdit={() => openEdit(plan)}
-                  onDelete={() => handleDelete(plan.id)}
-                  currentUser={user}
-                  readOnly={isCompleted}
-                />
-              ))}
+
+              {openMapDays[day] && <PlanDayMap plans={grouped[day]} />}
+              {isCompleted ? (
+                // 완료된 여행은 읽기 전용 → 드래그 비활성
+                grouped[day].map((plan) => (
+                  <PlanCard
+                    key={plan.id}
+                    plan={plan}
+                    expanded={expandedId === plan.id}
+                    membersMap={membersMap}
+                    isAdmin={isAdmin}
+                    onToggle={() => setExpandedId(expandedId === plan.id ? null : plan.id)}
+                    onEdit={() => openEdit(plan)}
+                    onDelete={() => handleDelete(plan.id)}
+                    currentUser={user}
+                    readOnly={isCompleted}
+                  />
+                ))
+              ) : (
+                <Reorder.Group
+                  axis="y"
+                  as="div"
+                  values={grouped[day]}
+                  onReorder={(newOrder) => handleReorder(day, newOrder)}
+                >
+                  {grouped[day].map((plan) => (
+                    <DraggablePlan
+                      key={plan.id}
+                      plan={plan}
+                      expanded={expandedId === plan.id}
+                      membersMap={membersMap}
+                      isAdmin={isAdmin}
+                      onToggle={() => setExpandedId(expandedId === plan.id ? null : plan.id)}
+                      onEdit={() => openEdit(plan)}
+                      onDelete={() => handleDelete(plan.id)}
+                      currentUser={user}
+                      readOnly={isCompleted}
+                    />
+                  ))}
+                </Reorder.Group>
+              )}
             </div>
           ))}
         </div>
@@ -271,7 +383,23 @@ export default function PlanPage() {
   )
 }
 
-function PlanCard({ plan, expanded, onToggle, onEdit, onDelete, currentUser, membersMap, isAdmin, readOnly }) {
+// 드래그 가능한 일정 항목 (핸들로만 드래그 → 탭 펼치기와 충돌 방지)
+function DraggablePlan(props) {
+  const dragControls = useDragControls()
+  return (
+    <Reorder.Item
+      value={props.plan}
+      as="div"
+      dragListener={false}
+      dragControls={dragControls}
+      style={{ position: 'relative' }}
+    >
+      <PlanCard {...props} dragControls={dragControls} />
+    </Reorder.Item>
+  )
+}
+
+function PlanCard({ plan, expanded, onToggle, onEdit, onDelete, currentUser, membersMap, isAdmin, readOnly, dragControls }) {
   const memberInfo = membersMap ? membersMap[plan.user_id] : null
   const displayAuthor = getDisplayName(membersMap, plan.user_id, {
     fallback: plan.created_by || '알 수 없음',
@@ -283,12 +411,25 @@ function PlanCard({ plan, expanded, onToggle, onEdit, onDelete, currentUser, mem
   return (
     <motion.div
       className="plan-card"
-      layout
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
     >
       <div className="plan-card-header" onClick={onToggle}>
         <div className="plan-card-left">
+          {dragControls && (
+            <span
+              className="plan-drag-handle"
+              onPointerDown={(e) => { e.stopPropagation(); dragControls.start(e) }}
+              onClick={(e) => e.stopPropagation()}
+              title="드래그해서 순서 변경"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <circle cx="9" cy="5" r="1.7" /><circle cx="15" cy="5" r="1.7" />
+                <circle cx="9" cy="12" r="1.7" /><circle cx="15" cy="12" r="1.7" />
+                <circle cx="9" cy="19" r="1.7" /><circle cx="15" cy="19" r="1.7" />
+              </svg>
+            </span>
+          )}
           {plan.time_label && (
             <span className="plan-time">{plan.time_label}</span>
           )}

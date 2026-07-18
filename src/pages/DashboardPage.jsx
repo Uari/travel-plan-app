@@ -7,6 +7,7 @@ import {
   animate,
 } from "framer-motion";
 import confetti from "canvas-confetti";
+import { useNavigate } from "react-router-dom";
 import { KOREA_REGIONS } from "../data/regions.js";
 import KoreaMapSVG from "../components/KoreaMapSVG.jsx";
 import { supabase } from "../lib/supabase.js";
@@ -34,11 +35,69 @@ export default function DashboardPage() {
   const [showNameModal, setShowNameModal] = useState(false);
   const [tempName, setTempName] = useState("");
 
+  const navigate = useNavigate();
+
+  // 여행 요약 대시보드용 데이터
+  const [summary, setSummary] = useState(null);
+  // 다트(여행지 랜덤 추천)는 보조 기능으로 접어둔다
+  const [dartOpen, setDartOpen] = useState(false);
+
   useEffect(() => {
     // Defer map rendering to prevent stuttering during page transition
     const timer = setTimeout(() => setMapLoaded(true), 150);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (!tripId) return;
+    let alive = true;
+    (async () => {
+      const [plansRes, expRes, accRes, clRes] = await Promise.all([
+        supabase.from("plans").select("title,day_label,time_label,sort_order").eq("trip_id", tripId),
+        supabase.from("expenses").select("amount").eq("trip_id", tripId),
+        supabase.from("accommodations").select("name,is_selected").eq("trip_id", tripId),
+        supabase.from("checklist").select("is_done").eq("trip_id", tripId),
+      ]);
+      if (!alive) return;
+      const plans = plansRes.data || [];
+      const expenses = expRes.data || [];
+      const accs = accRes.data || [];
+      const cl = clRes.data || [];
+
+      const sortedPlans = [...plans].sort((a, b) => {
+        const da = a.day_label || "", db = b.day_label || "";
+        if (da !== db) return da.localeCompare(db, undefined, { numeric: true });
+        const sa = a.sort_order ?? Infinity, sb = b.sort_order ?? Infinity;
+        if (sa !== sb) return sa - sb;
+        return (a.time_label || "").localeCompare(b.time_label || "");
+      });
+
+      setSummary({
+        planCount: plans.length,
+        firstPlan: sortedPlans[0] || null,
+        totalExpense: expenses.reduce((s, e) => s + Number(e.amount || 0), 0),
+        accSelected: (accs.find((a) => a.is_selected) || {}).name || null,
+        accCount: accs.length,
+        clDone: cl.filter((c) => c.is_done).length,
+        clTotal: cl.length,
+      });
+    })();
+    return () => { alive = false; };
+  }, [tripId]);
+
+  // D-day 계산 (시작일 기준)
+  const dday = (() => {
+    if (!tripData?.start_date) return null;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const start = new Date(tripData.start_date); start.setHours(0, 0, 0, 0);
+    return Math.round((start - today) / 86400000);
+  })();
+  const ddayLabel = dday == null ? null : dday > 0 ? `D-${dday}` : dday === 0 ? "D-DAY" : `D+${-dday}`;
+
+  const memberCount = tripData?.member_count || 1;
+  const perPerson = summary ? Math.ceil(summary.totalExpense / memberCount) : 0;
+  const clPct = summary && summary.clTotal > 0 ? Math.round((summary.clDone / summary.clTotal) * 100) : 0;
+  const goTab = (tab) => navigate(`/trip/${tripId}/${tab}`);
 
   const handleUpdateDate = async (e) => {
     e.preventDefault();
@@ -224,7 +283,50 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Map and Dart container combined for overlay */}
+      {/* 여행 요약 대시보드 */}
+      <div className="summary-grid">
+        <button
+          className="summary-cell dday"
+          onClick={() => { setTempDate(tripData?.start_date || ''); setShowDateModal(true); }}
+        >
+          <span className="summary-cell-label">📅 여행까지</span>
+          <span className="summary-cell-value">{ddayLabel || '날짜 미정'}</span>
+          <span className="summary-cell-sub">{tripData?.start_date || '클릭해서 설정'}</span>
+        </button>
+        <button className="summary-cell" onClick={() => goTab('accommodation')}>
+          <span className="summary-cell-label">🏨 확정 숙소</span>
+          <span className="summary-cell-value">{summary?.accSelected || '미정'}</span>
+          <span className="summary-cell-sub">후보 {summary?.accCount ?? 0}곳</span>
+        </button>
+        <button className="summary-cell" onClick={() => goTab('plan')}>
+          <span className="summary-cell-label">🗓️ 일정</span>
+          <span className="summary-cell-value">{summary?.planCount ?? 0}개</span>
+          <span className="summary-cell-sub">{summary?.firstPlan?.title || '아직 없음'}</span>
+        </button>
+        <button className="summary-cell" onClick={() => goTab('expense')}>
+          <span className="summary-cell-label">💰 총비용</span>
+          <span className="summary-cell-value">{(summary?.totalExpense ?? 0).toLocaleString()}원</span>
+          <span className="summary-cell-sub">1인당 {perPerson.toLocaleString()}원</span>
+        </button>
+        <button className="summary-cell" onClick={() => goTab('checklist')}>
+          <span className="summary-cell-label">✅ 준비물</span>
+          <span className="summary-cell-value">{clPct}%</span>
+          <span className="summary-cell-sub">{summary?.clDone ?? 0}/{summary?.clTotal ?? 0} 완료</span>
+        </button>
+        <div className="summary-cell static">
+          <span className="summary-cell-label">👥 멤버</span>
+          <span className="summary-cell-value">{memberCount}명</span>
+          <span className="summary-cell-sub">함께하는 여행</span>
+        </div>
+      </div>
+
+      {/* 여행지 랜덤 추천 (보조 기능, 접이식) */}
+      <button className="dart-section-toggle" onClick={() => setDartOpen((o) => !o)}>
+        <span>🎯 여행지 랜덤으로 정하기</span>
+        <span className="dart-section-chevron">{dartOpen ? '▲' : '▼'}</span>
+      </button>
+
+      {dartOpen && (
       <div className="map-and-dart-container">
         <div className="map-container">
           {mapLoaded ? (
@@ -342,6 +444,7 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+      )}
 
       {/* Date Editor Modal */}
       <BottomSheetModal open={showDateModal} onClose={() => setShowDateModal(false)}>

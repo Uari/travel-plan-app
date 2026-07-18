@@ -13,6 +13,7 @@ import AccommodationPage from './pages/AccommodationPage.jsx'
 import MyPage from './pages/MyPage.jsx'
 import TravelLogPage from './pages/TravelLogPage.jsx'
 import TravelLogDetailPage from './pages/TravelLogDetailPage.jsx'
+import InviteSheet from './components/InviteSheet.jsx'
 import './App.css'
 
 const TABS = [
@@ -25,7 +26,8 @@ const TABS = [
 
 export default function App() {
   const navigate = useNavigate()
-  
+  const location = useLocation()
+
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('travelplan_theme') || 'light'
   })
@@ -55,6 +57,13 @@ export default function App() {
 
   const handleLogin = (sessionObj) => {
     setUser(sessionObj)
+    // 초대 링크(/join/:code)로 들어와 로그인한 경우, 로그인 후 해당 여행으로 바로 입장
+    const pending = localStorage.getItem('travelplan_pending_join')
+    if (pending) {
+      localStorage.removeItem('travelplan_pending_join')
+      navigate(`/join/${pending}`, { replace: true })
+      return
+    }
     navigate('/lobby', { replace: true })
   }
 
@@ -65,6 +74,9 @@ export default function App() {
   }
 
   if (!user) {
+    // 초대 링크로 미로그인 진입 시 코드를 저장해두고 로그인 후 자동 입장
+    const m = location.pathname.match(/^\/join\/([^/]+)/)
+    if (m) localStorage.setItem('travelplan_pending_join', m[1])
     return <LoginPage onLogin={handleLogin} />
   }
 
@@ -72,12 +84,68 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Navigate to="/lobby" replace />} />
       <Route path="/lobby" element={<LobbyPage user={user} onLogout={handleLogout} />} />
+      <Route path="/join/:code" element={<JoinTrip user={user} />} />
       <Route path="/mypage" element={<MyPage user={user} onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />} />
       <Route path="/travel-log" element={<TravelLogPage user={user} />} />
       <Route path="/travel-log/:tripId" element={<TravelLogDetailPage user={user} />} />
       <Route path="/trip/:tripId/*" element={<TripLayout user={user} onLogout={handleLogout} />} />
       <Route path="*" element={<Navigate to="/lobby" replace />} />
     </Routes>
+  )
+}
+
+// 초대 링크(/join/:code) 진입 → 자동 입장 후 여행으로 이동
+function JoinTrip({ user }) {
+  const { code } = useParams()
+  const navigate = useNavigate()
+  const [status, setStatus] = useState('joining') // joining | error
+  const [msg, setMsg] = useState('')
+
+  useEffect(() => {
+    let alive = true
+    ;(async () => {
+      const c = (code || '').trim()
+      if (!c) { navigate('/lobby', { replace: true }); return }
+
+      const { data: trip, error } = await supabase.from('trips').select('*').eq('id', c).single()
+      if (error || !trip) {
+        if (alive) { setStatus('error'); setMsg('존재하지 않는 초대 코드예요.') }
+        return
+      }
+
+      const { error: joinErr } = await supabase
+        .from('trip_members')
+        .insert({ trip_id: c, user_id: user.id, traveler_name: user.name })
+      if (joinErr && joinErr.code !== '23505') { // 23505 = 이미 멤버
+        if (alive) { setStatus('error'); setMsg('입장에 실패했어요. 다시 시도해주세요.') }
+        return
+      }
+
+      const { count } = await supabase
+        .from('trip_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('trip_id', c)
+      const actual = count ?? 1
+      if (actual > trip.member_count) {
+        await supabase.from('trips').update({ member_count: actual }).eq('id', c)
+      }
+
+      if (alive) navigate(`/trip/${c}/dashboard`, { replace: true })
+    })()
+    return () => { alive = false }
+  }, [code, user.id, user.name, navigate])
+
+  return (
+    <div className="app-shell" style={{ justifyContent: 'center', alignItems: 'center', gap: '1rem', textAlign: 'center', padding: '1.5rem' }}>
+      {status === 'joining' ? (
+        <p>여행에 입장 중… ✈️</p>
+      ) : (
+        <>
+          <p>⚠️ {msg}</p>
+          <button className="btn btn-secondary" onClick={() => navigate('/lobby', { replace: true })}>로비로 돌아가기</button>
+        </>
+      )}
+    </div>
   )
 }
 
@@ -93,6 +161,7 @@ function TripLayout({ user, onLogout }) {
   const [tripData, setTripData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(null)
+  const [showInvite, setShowInvite] = useState(false)
 
   useEffect(() => {
     const fetchTripContext = async () => {
@@ -193,15 +262,12 @@ function TripLayout({ user, onLogout }) {
             <span className="top-bar-user" style={{ fontSize: '0.75rem', opacity: 0.7 }}>
               {tripId.slice(0,6)}..{isAdmin ? '👑' : ''}
             </span>
-            <button 
-              className="btn btn-secondary btn-sm" 
-              style={{ padding: '0.15rem 0.3rem', fontSize: '0.65rem', background: 'rgba(193,114,63,0.14)', border: 'none', color: 'var(--accent-secondary)' }}
-              onClick={() => {
-                navigator.clipboard.writeText(tripId);
-                alert('초대 코드(' + tripId + ')가 복사되었습니다!\n카카오톡 친구에게 붙여넣기해서 초대하세요.');
-              }}
+            <button
+              className="btn btn-secondary btn-sm"
+              style={{ padding: '0.15rem 0.45rem', fontSize: '0.65rem', background: 'rgba(193,114,63,0.14)', border: 'none', color: 'var(--accent-secondary)' }}
+              onClick={() => setShowInvite(true)}
             >
-              복사
+              🤝 초대
             </button>
           </div>
           <button className="top-bar-user mypage-btn" onClick={() => navigate('/mypage')} style={{ padding: '0.2rem 0.4rem', fontSize: '0.75rem' }}>
@@ -283,6 +349,8 @@ function TripLayout({ user, onLogout }) {
           )
         })}
       </nav>
+
+      <InviteSheet open={showInvite} onClose={() => setShowInvite(false)} tripId={tripId} />
     </div>
     </TripContext.Provider>
   )

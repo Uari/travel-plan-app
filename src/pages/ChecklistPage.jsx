@@ -25,6 +25,9 @@ export default function ChecklistPage() {
   const [form, setForm] = useState({ item: '', assigned_to: [user.id] })
   const [editId, setEditId] = useState(null)
 
+  // 담당자 필터: 전체 / 내 담당만
+  const [mineOnly, setMineOnly] = useState(false)
+
   useEffect(() => {
     loadMembers()
   }, [tripId])
@@ -144,11 +147,18 @@ export default function ChecklistPage() {
     if (!error) await loadItems()
   }
 
+  // 진행률은 필터와 무관하게 항상 전체 기준으로 표시
   const doneCount = items.filter((i) => i.is_done).length
   const progress = items.length > 0 ? (doneCount / items.length) * 100 : 0
 
-  const pending = items.filter((i) => !i.is_done)
-  const done = items.filter((i) => i.is_done)
+  // 내 담당 여부 (레거시 name / 신규 id 모두 인정)
+  const isMine = (i) => {
+    const a = i.assigned_to || []
+    return a.includes(user.id) || a.includes(user.name)
+  }
+  const visibleItems = mineOnly ? items.filter(isMine) : items
+  const pending = visibleItems.filter((i) => !i.is_done)
+  const done = visibleItems.filter((i) => i.is_done)
 
   return (
     <div className="checklist-page">
@@ -181,6 +191,24 @@ export default function ChecklistPage() {
           </motion.div>
         )}
       </div>
+
+      {/* 담당자 필터 */}
+      {items.length > 0 && (
+        <div className="checklist-filter">
+          <button
+            className={`cl-filter-btn${!mineOnly ? ' active' : ''}`}
+            onClick={() => setMineOnly(false)}
+          >
+            전체
+          </button>
+          <button
+            className={`cl-filter-btn${mineOnly ? ' active' : ''}`}
+            onClick={() => setMineOnly(true)}
+          >
+            내 담당만
+          </button>
+        </div>
+      )}
 
       {/* Quick add items */}
       {!isCompleted && (
@@ -220,8 +248,14 @@ export default function ChecklistPage() {
           {pending.length === 0 && done.length === 0 && (
             <div className="empty-state">
               <div className="empty-icon">📝</div>
-              <p>아직 준비물이 없어요!</p>
-              <p>위에서 빠르게 추가해 보세요.</p>
+              {mineOnly ? (
+                <p>내가 담당인 준비물이 없어요.</p>
+              ) : (
+                <>
+                  <p>아직 준비물이 없어요!</p>
+                  <p>위에서 빠르게 추가해 보세요.</p>
+                </>
+              )}
             </div>
           )}
 

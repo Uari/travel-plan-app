@@ -88,6 +88,82 @@
   font-weight: 600;
 }
 
+/* 초대 시트 */
+.invite-qr-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.invite-qr {
+  width: 200px;
+  height: 200px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: #fbfaf4;
+  padding: 8px;
+}
+
+.invite-qr.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.invite-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.invite-code-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  margin-bottom: 0.6rem;
+}
+
+.invite-code-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.invite-code {
+  font-family: 'Courier New', monospace;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--accent-secondary);
+}
+
+.invite-link-box {
+  padding: 0.7rem 1rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  margin-bottom: 1.1rem;
+  overflow: hidden;
+}
+
+.invite-link-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  word-break: break-all;
+}
+
+.invite-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
 /* Nav active dot */
 .nav-active-dot {
   position: absolute;

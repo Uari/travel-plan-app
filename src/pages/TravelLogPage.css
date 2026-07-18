@@ -18,6 +18,116 @@
   z-index: 10;
 }
 
+/* 지도 / 타임라인 전환 세그먼트 */
+.travellog-viewmode {
+  display: flex;
+  width: fit-content;
+  gap: 0.25rem;
+  margin: 0 auto 1.1rem;
+  padding: 0.25rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+}
+
+.tlvm-btn {
+  padding: 0.45rem 1.1rem;
+  border-radius: var(--radius-full);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-base);
+  font-size: 0.83rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.tlvm-btn.active {
+  background: var(--accent-primary);
+  color: #fbfaf4;
+  box-shadow: var(--shadow-soft);
+}
+
+/* 연도별 타임라인 */
+.travellog-timeline {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.tl-year-label {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--accent-secondary);
+  margin-bottom: 0.6rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid var(--border-subtle);
+}
+
+.tl-year-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.tl-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-align: left;
+  padding: 1rem 1.15rem;
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-soft);
+  cursor: pointer;
+  font-family: var(--font-base);
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.tl-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  background: var(--accent-primary);
+  opacity: 0.85;
+}
+
+.tl-card:hover {
+  border-color: var(--border-active);
+  box-shadow: var(--shadow-card);
+}
+
+.tl-card:active {
+  transform: scale(0.99);
+}
+
+.tl-card-name {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.tl-card-meta {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
 .travellog-header h2 {
   font-size: 1.1rem;
   margin: 0;

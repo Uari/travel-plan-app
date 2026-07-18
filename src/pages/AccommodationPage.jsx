@@ -14,14 +14,31 @@ export default function AccommodationPage() {
     () => supabase.from('accommodations').select('*').eq('trip_id', tripId).order('created_at', { ascending: true }),
     [tripId]
   )
-  // 투표 수 기준으로 정렬 (내림차순), 확정된 숙소가 있다면 맨 위로
+  // 정렬 기준: 추천순(좋아요) / 가격 낮은순 / 최신순
+  const [sortBy, setSortBy] = useState('votes') // 'votes' | 'price' | 'recent'
+
+  // 확정된 숙소는 어떤 정렬에서도 항상 최상단 유지
   const accommodations = useMemo(() => {
-    return [...fetchedAccommodations].sort((a, b) => {
-      if (a.is_selected) return -1
-      if (b.is_selected) return 1
+    const list = [...fetchedAccommodations]
+    const compare = (a, b) => {
+      if (sortBy === 'price') {
+        // 미입력(0)은 뒤로 보냄
+        const pa = a.price > 0 ? a.price : Infinity
+        const pb = b.price > 0 ? b.price : Infinity
+        return pa - pb
+      }
+      if (sortBy === 'recent') {
+        return (b.created_at || '').localeCompare(a.created_at || '')
+      }
+      // votes (기본)
       return (b.votes?.length || 0) - (a.votes?.length || 0)
+    }
+    return list.sort((a, b) => {
+      if (a.is_selected && !b.is_selected) return -1
+      if (b.is_selected && !a.is_selected) return 1
+      return compare(a, b)
     })
-  }, [fetchedAccommodations])
+  }, [fetchedAccommodations, sortBy])
 
   const [showModal, setShowModal] = useState(false)
   const [editId, setEditId] = useState(null)
@@ -217,6 +234,24 @@ export default function AccommodationPage() {
         <h2 className="page-title">숙소 결정하기 🏨</h2>
         <p className="page-subtitle">후보를 올리고 팀원들과 투표해서 최종 숙소를 결정하세요!</p>
       </div>
+
+      {accommodations.length > 1 && (
+        <div className="acc-sort">
+          {[
+            { key: 'votes', label: '추천순' },
+            { key: 'price', label: '가격 낮은순' },
+            { key: 'recent', label: '최신순' },
+          ].map((opt) => (
+            <button
+              key={opt.key}
+              className={`acc-sort-btn${sortBy === opt.key ? ' active' : ''}`}
+              onClick={() => setSortBy(opt.key)}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="accommodation-list">
         {loading ? (
