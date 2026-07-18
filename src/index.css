@@ -4,7 +4,7 @@
    트래블로그(여행 일지) 감성
    ========================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&family=Noto+Serif+KR:wght@500;600;700&display=swap');
+/* Pretendard 폰트는 index.html의 <link>에서 로드합니다 (요즘 한국 앱 표준 산세리프) */
 
 :root {
   /* ---- Surfaces (샌드/페이퍼) ---- */
@@ -75,8 +75,8 @@
   --radius-xl: 30px;
   --radius-full: 9999px;
 
-  --font-base: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
-  --font-heading: 'Noto Serif KR', 'Noto Sans KR', serif;
+  --font-base: 'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-heading: 'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', -apple-system, sans-serif;
   --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 
   --nav-height: 70px;
