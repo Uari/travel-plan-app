@@ -6,6 +6,7 @@ async function invokeAuthFunction(name, body) {
   const { data, error } = await supabase.functions.invoke(name, { body })
 
   if (error) {
+    // 예기치 못한 오류(함수 크래시 등, 5xx). 본문이 있으면 그 메시지를 사용한다.
     if (error.context && typeof error.context.json === 'function') {
       try {
         const parsed = await error.context.json()
@@ -15,6 +16,12 @@ async function invokeAuthFunction(name, body) {
       }
     }
     return { data: null, error: { error: 'server_error', message: error.message } }
+  }
+
+  // 로그인 실패·탈퇴 계정 등 "처리된 실패"는 HTTP 200 + 본문 error로 내려온다.
+  // (브라우저 콘솔에 4xx 네트워크 에러가 찍히지 않도록 하기 위함)
+  if (data && data.error) {
+    return { data: null, error: data }
   }
 
   return { data, error: null }

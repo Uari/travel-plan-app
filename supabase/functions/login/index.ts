@@ -12,7 +12,8 @@ Deno.serve(async (req) => {
     const trimmedPw = typeof password === 'string' ? password.trim() : ''
 
     if (!trimmedId || !trimmedPw) {
-      return jsonResponse({ error: 'invalid_input', message: '아이디와 비밀번호를 모두 입력해주세요.' }, 400)
+      // 처리된 실패는 200으로 응답(본문 error로 구분) → 브라우저 콘솔 네트워크 에러 방지
+      return jsonResponse({ error: 'invalid_input', message: '아이디와 비밀번호를 모두 입력해주세요.' })
     }
 
     const supabaseAdmin = createClient(
@@ -27,17 +28,17 @@ Deno.serve(async (req) => {
       .single()
 
     if (error || !user) {
-      return jsonResponse({ error: 'not_found', message: '아이디가 존재하지 않습니다.' }, 404)
+      return jsonResponse({ error: 'not_found', message: '아이디가 존재하지 않습니다.' })
     }
 
     if (user.is_deleted) {
-      return jsonResponse({ error: 'deleted', message: '탈퇴 처리된 계정입니다.' }, 403)
+      return jsonResponse({ error: 'deleted', message: '탈퇴 처리된 계정입니다.' })
     }
 
     const { matches, needsRehash } = await verifyPassword(trimmedPw, user.password)
 
     if (!matches) {
-      return jsonResponse({ error: 'wrong_password', message: '비밀번호가 일치하지 않습니다.' }, 401)
+      return jsonResponse({ error: 'wrong_password', message: '비밀번호가 일치하지 않습니다.' })
     }
 
     if (needsRehash) {

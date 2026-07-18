@@ -73,6 +73,11 @@ export default function App() {
     navigate('/lobby', { replace: true })
   }
 
+  // 사용자가 직접 로그아웃 버튼을 누를 때만 확인. (탈퇴 후 자동 로그아웃 등은 handleLogout 직접 호출)
+  const confirmLogout = () => {
+    if (window.confirm('로그아웃 하시겠어요?')) handleLogout()
+  }
+
   if (!user) {
     // 초대 링크로 미로그인 진입 시 코드를 저장해두고 로그인 후 자동 입장
     const m = location.pathname.match(/^\/join\/([^/]+)/)
@@ -83,12 +88,12 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/lobby" replace />} />
-      <Route path="/lobby" element={<LobbyPage user={user} onLogout={handleLogout} />} />
+      <Route path="/lobby" element={<LobbyPage user={user} onLogout={confirmLogout} />} />
       <Route path="/join/:code" element={<JoinTrip user={user} />} />
       <Route path="/mypage" element={<MyPage user={user} onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />} />
       <Route path="/travel-log" element={<TravelLogPage user={user} />} />
       <Route path="/travel-log/:tripId" element={<TravelLogDetailPage user={user} />} />
-      <Route path="/trip/:tripId/*" element={<TripLayout user={user} onLogout={handleLogout} />} />
+      <Route path="/trip/:tripId/*" element={<TripLayout user={user} onLogout={confirmLogout} />} />
       <Route path="*" element={<Navigate to="/lobby" replace />} />
     </Routes>
   )

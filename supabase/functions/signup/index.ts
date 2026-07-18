@@ -13,7 +13,8 @@ Deno.serve(async (req) => {
     const trimmedName = typeof name === 'string' ? name.trim() : ''
 
     if (!trimmedId || !trimmedPw || !trimmedName) {
-      return jsonResponse({ error: 'invalid_input', message: '아이디, 비밀번호, 닉네임을 모두 입력해주세요.' }, 400)
+      // 처리된 실패는 200으로 응답(본문 error로 구분) → 브라우저 콘솔 네트워크 에러 방지
+      return jsonResponse({ error: 'invalid_input', message: '아이디, 비밀번호, 닉네임을 모두 입력해주세요.' })
     }
 
     const supabaseAdmin = createClient(
@@ -28,7 +29,7 @@ Deno.serve(async (req) => {
       .single()
 
     if (existingUser) {
-      return jsonResponse({ error: 'id_taken', message: '이미 존재하는 아이디입니다.' }, 409)
+      return jsonResponse({ error: 'id_taken', message: '이미 존재하는 아이디입니다.' })
     }
 
     const hashedPassword = await hashPassword(trimmedPw)

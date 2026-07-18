@@ -10,7 +10,8 @@ Deno.serve(async (req) => {
     const { id, currentPassword, newPassword } = await req.json()
 
     if (!id || !currentPassword || !newPassword) {
-      return jsonResponse({ error: 'invalid_input', message: '모든 필드를 입력해주세요.' }, 400)
+      // 처리된 실패는 200으로 응답(본문 error로 구분) → 브라우저 콘솔 네트워크 에러 방지
+      return jsonResponse({ error: 'invalid_input', message: '모든 필드를 입력해주세요.' })
     }
 
     const supabaseAdmin = createClient(
@@ -25,12 +26,12 @@ Deno.serve(async (req) => {
       .single()
 
     if (error || !user) {
-      return jsonResponse({ error: 'not_found', message: '사용자를 찾을 수 없습니다.' }, 404)
+      return jsonResponse({ error: 'not_found', message: '사용자를 찾을 수 없습니다.' })
     }
 
     const { matches } = await verifyPassword(currentPassword, user.password)
     if (!matches) {
-      return jsonResponse({ error: 'wrong_password', message: '현재 비밀번호가 틀렸습니다.' }, 401)
+      return jsonResponse({ error: 'wrong_password', message: '현재 비밀번호가 틀렸습니다.' })
     }
 
     const newHash = await hashPassword(newPassword)

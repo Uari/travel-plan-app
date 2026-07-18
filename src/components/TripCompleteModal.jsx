@@ -1,22 +1,22 @@
 import { useState, useMemo } from 'react'
 import BottomSheetModal from './BottomSheetModal.jsx'
 import { SUPPORTED_COUNTRIES, KOREA_PROVINCES } from '../data/countries.js'
-import { KOREA_REGIONS } from '../data/regions.js'
+import { KOREA_DISTRICTS } from '../data/koreaDistricts.js'
 
 // 여행 완료 처리 모달. 국가/지역/후기를 입력받아 onComplete로 payload를 넘긴다.
-// 지도 다트는 도(道) 단위로만 배치되므로, 대한민국은 "도"를 필수로 받고 세부 지역(시/군)은 선택 입력이다.
+// 지도 다트는 도(道) 단위로만 배치되므로, 대한민국은 "도"를 필수로 받고 세부 지역(시/군/구)은 선택 입력이다.
 export default function TripCompleteModal({ open, onClose, onComplete, submitting }) {
   const [countryCode, setCountryCode] = useState('KR')
   const [province, setProvince] = useState('')
-  const [regionId, setRegionId] = useState('')
+  const [district, setDistrict] = useState('')
   const [destinationLabel, setDestinationLabel] = useState('')
   const [reviewNote, setReviewNote] = useState('')
 
   const isKorea = countryCode === 'KR'
 
-  // 선택한 도에 속하는 KOREA_REGIONS 항목만 노출 (없으면 도 단위로만 기록)
-  const regionsInProvince = useMemo(
-    () => KOREA_REGIONS.filter((r) => r.province === province),
+  // 선택한 도에 속하는 전국 행정구역(시/군/구) 목록 (없으면 도 단위로만 기록)
+  const districtsInProvince = useMemo(
+    () => KOREA_DISTRICTS[province] || [],
     [province]
   )
 
@@ -27,12 +27,11 @@ export default function TripCompleteModal({ open, onClose, onComplete, submittin
     if (!canSubmit || submitting) return
 
     if (isKorea) {
-      const region = KOREA_REGIONS.find((r) => r.id === regionId)
       onComplete({
         country_code: 'KR',
         region_province: province,
-        region_id: region ? region.id : null,
-        region_label: region ? region.name : province,
+        region_id: district ? `${province}-${district}` : null,
+        region_label: district ? `${province} ${district}` : province,
         destination_label: null,
         review_note: reviewNote.trim() || null,
       })
@@ -63,7 +62,7 @@ export default function TripCompleteModal({ open, onClose, onComplete, submittin
             onChange={(e) => {
               setCountryCode(e.target.value)
               setProvince('')
-              setRegionId('')
+              setDistrict('')
               setDestinationLabel('')
             }}
           >
@@ -84,7 +83,7 @@ export default function TripCompleteModal({ open, onClose, onComplete, submittin
                 value={province}
                 onChange={(e) => {
                   setProvince(e.target.value)
-                  setRegionId('')
+                  setDistrict('')
                 }}
                 required
               >
@@ -96,18 +95,18 @@ export default function TripCompleteModal({ open, onClose, onComplete, submittin
                 ))}
               </select>
             </div>
-            {province && regionsInProvince.length > 0 && (
+            {province && districtsInProvince.length > 0 && (
               <div className="input-group">
                 <label className="input-label">세부 지역 (선택)</label>
                 <select
                   className="input"
-                  value={regionId}
-                  onChange={(e) => setRegionId(e.target.value)}
+                  value={district}
+                  onChange={(e) => setDistrict(e.target.value)}
                 >
                   <option value="">선택 안 함</option>
-                  {regionsInProvince.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.emoji} {r.name}
+                  {districtsInProvince.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
                     </option>
                   ))}
                 </select>
