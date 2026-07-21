@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { CalendarDays, Map, Pencil, Plus, MapPin, Check, Hotel, Image, FileText, Trash2, Plane } from 'lucide-react'
+import { CalendarDays, Map as MapIcon, Pencil, Plus, MapPin, Check, Hotel, Image, FileText, Trash2, Plane } from 'lucide-react'
 import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion'
 import { supabase } from '../lib/supabase.js'
 import { useTripContext } from '../context/TripContext.jsx'
@@ -239,7 +239,7 @@ export default function PlanPage() {
                   className={`day-map-toggle${openMapDays[day] ? ' active' : ''}`}
                   onClick={() => toggleMap(day)}
                 >
-                  <Map size={16} /> {openMapDays[day] ? '지도 닫기' : '지도'}
+                  <MapIcon size={16} /> {openMapDays[day] ? '지도 닫기' : '지도'}
                 </button>
               </div>
 
@@ -340,7 +340,7 @@ export default function PlanPage() {
                       className="btn btn-secondary btn-sm"
                       onClick={() => setShowPicker((v) => !v)}
                     >
-                      <Map size={16} /> {showPicker ? '지도 닫기' : '지도에서 위치 지정'}
+                      <MapIcon size={16} /> {showPicker ? '지도 닫기' : '지도에서 위치 지정'}
                     </button>
                     {form.lat != null && form.lng != null && (
                       <span className="text-xs" style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>
