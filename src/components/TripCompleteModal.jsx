@@ -25,7 +25,11 @@ export default function TripCompleteModal({ open, onClose, onComplete, submittin
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (!canSubmit || submitting) return
+    if (submitting) return
+    if (!canSubmit) {
+      alert(isKorea ? '여행한 지역(도/광역시)을 선택해주세요.' : '여행한 도시·지역을 입력해주세요.')
+      return
+    }
 
     if (isKorea) {
       onComplete({
@@ -142,7 +146,7 @@ export default function TripCompleteModal({ open, onClose, onComplete, submittin
           <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={onClose} disabled={submitting}>
             취소
           </button>
-          <button type="submit" className="btn btn-primary" style={{ flex: 2 }} disabled={!canSubmit || submitting}>
+          <button type="submit" className="btn btn-primary" style={{ flex: 2 }} disabled={submitting}>
             {submitting ? '처리 중...' : <><PartyPopper size={16} /> 여행 완료</>}
           </button>
         </div>
