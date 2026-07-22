@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plane, AlertTriangle, LogIn } from 'lucide-react'
 import { login, signup } from '../lib/authApi.js'
+import { setSessionToken } from '../lib/supabase.js'
 import './LoginPage.css'
 
 export default function LoginPage({ onLogin }) {
@@ -59,6 +60,7 @@ export default function LoginPage({ onLogin }) {
         }
 
         localStorage.setItem('travelplan_session', JSON.stringify(data.user))
+        setSessionToken(data.token)
         onLogin(data.user)
       } else {
         const { data, error } = await login(trimmedId, trimmedPw)
@@ -68,6 +70,7 @@ export default function LoginPage({ onLogin }) {
         }
 
         localStorage.setItem('travelplan_session', JSON.stringify(data.user))
+        setSessionToken(data.token)
         onLogin(data.user)
       }
     } catch (err) {

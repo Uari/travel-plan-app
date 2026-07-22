@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { handleOptions, jsonResponse } from '../_shared/cors.ts'
 import { hashPassword, verifyPassword } from '../_shared/password.ts'
+import { signAppToken } from '../_shared/token.ts'
 
 Deno.serve(async (req) => {
   const preflight = handleOptions(req)
@@ -47,7 +48,9 @@ Deno.serve(async (req) => {
       await supabaseAdmin.from('users').update({ password: newHash }).eq('id', trimmedId)
     }
 
-    return jsonResponse({ user: { id: user.id, name: user.name } })
+    const token = await signAppToken(user.id)
+
+    return jsonResponse({ user: { id: user.id, name: user.name }, token })
   } catch (err) {
     console.error(err)
     return jsonResponse({ error: 'server_error', message: '서버 오류가 발생했습니다.' }, 500)

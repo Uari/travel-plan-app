@@ -5,13 +5,29 @@ import { createClient } from '@supabase/supabase-js'
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co'
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key'
 
+let sessionToken = localStorage.getItem('travelplan_token') || null
+
+export function setSessionToken(t) {
+  sessionToken = t || null
+  if (sessionToken) localStorage.setItem('travelplan_token', sessionToken)
+  else localStorage.removeItem('travelplan_token')
+}
+
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  accessToken: async () => sessionToken || SUPABASE_ANON_KEY,
   global: {
-    fetch: (...args) => {
+    fetch: async (...args) => {
       if (SUPABASE_URL.includes('placeholder')) {
         return Promise.reject(new Error('Supabase is not configured yet. Using sample data.'))
       }
-      return fetch(...args)
+      const res = await fetch(...args)
+      // ponytail: naive global 401→relogin
+      if (res.status === 401 && sessionToken) {
+        setSessionToken(null)
+        localStorage.removeItem('travelplan_session')
+        location.reload()
+      }
+      return res
     }
   }
 })

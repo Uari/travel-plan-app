@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Routes, Route, Navigate, useNavigate, useLocation, useParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plane, Crown, UserPlus, User, Check, AlertTriangle } from 'lucide-react'
-import { supabase } from './lib/supabase.js'
+import { supabase, setSessionToken } from './lib/supabase.js'
 import { TripContext } from './context/TripContext.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import LobbyPage from './pages/LobbyPage.jsx'
@@ -45,6 +45,11 @@ export default function App() {
   const [user, setUser] = useState(() => {
     // Read new JSON session
     const sessionStr = localStorage.getItem('travelplan_session')
+    // 마이그레이션: 세션은 있는데 토큰이 없으면(Phase 2 이전 로그인) 한 번만 강제 재로그인시켜 토큰을 확보한다.
+    if (sessionStr && !localStorage.getItem('travelplan_token')) {
+      localStorage.removeItem('travelplan_session')
+      return null
+    }
     if (sessionStr) {
       try {
         const session = JSON.parse(sessionStr)
@@ -70,6 +75,7 @@ export default function App() {
 
   const handleLogout = () => {
     localStorage.removeItem('travelplan_session')
+    setSessionToken(null)
     setUser(null)
     navigate('/lobby', { replace: true })
   }
