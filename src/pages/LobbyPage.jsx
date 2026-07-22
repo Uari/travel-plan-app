@@ -157,7 +157,24 @@ export default function LobbyPage({ user, onLogout }) {
     const confirmed = window.confirm("정말 이 방에서 나가시겠습니까?\n방을 나가면 목록에서 사라집니다.")
     if (!confirmed) return
 
-    // Remove from trip_members
+    // 방장 공백 방지: RLS 때문에 "나가기 전"(아직 멤버인 동안)에 처리해야 한다.
+    // 본인이 빠지면 조회/수정 권한도 사라지므로, 남을 멤버(본인 제외) 중 방장이
+    // 하나도 없으면 미리 전원을 방장으로 승격해 둔다.
+    const { data: others } = await supabase
+      .from('trip_members')
+      .select('user_id, is_admin')
+      .eq('trip_id', tripId)
+      .neq('user_id', user.id)
+
+    if (others && others.length > 0 && !others.some((m) => m.is_admin)) {
+      await supabase
+        .from('trip_members')
+        .update({ is_admin: true })
+        .eq('trip_id', tripId)
+        .neq('user_id', user.id)
+    }
+
+    // 본인 멤버십 삭제
     const { error } = await supabase
       .from('trip_members')
       .delete()
@@ -172,19 +189,6 @@ export default function LobbyPage({ user, onLogout }) {
     // Decrement count
     const newCount = Math.max(1, currentCount - 1)
     await supabase.from('trips').update({ member_count: newCount }).eq('id', tripId)
-
-    // 방장 공백 방지: 나간 뒤 방장(is_admin)이 아무도 없으면 남은 멤버 전원을 방장으로 승격
-    const { data: remaining } = await supabase
-      .from('trip_members')
-      .select('user_id, is_admin')
-      .eq('trip_id', tripId)
-
-    if (remaining && remaining.length > 0 && !remaining.some((m) => m.is_admin)) {
-      await supabase
-        .from('trip_members')
-        .update({ is_admin: true })
-        .eq('trip_id', tripId)
-    }
 
     // Refresh list
     fetchMyTrips()
